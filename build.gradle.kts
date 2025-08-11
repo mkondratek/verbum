@@ -1,21 +1,23 @@
 plugins {
-  kotlin("jvm") version "2.1.21"
+    id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
+    kotlin("jvm") version "2.2.0"
 }
 
 group = "com.mkondratek.verbum"
 version = "1.0-SNAPSHOT"
 
 repositories {
-  mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-  testImplementation(kotlin("test"))
+    testImplementation(kotlin("test"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 }
 
 tasks.test {
-  useJUnitPlatform()
+    useJUnitPlatform()
 }
 kotlin {
-  jvmToolchain(17)
+    jvmToolchain(17)
 }
