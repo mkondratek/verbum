@@ -49,3 +49,6 @@ bin/
 /.idea/gradle.xml
 /.idea/misc.xml
 /.idea/vcs.xml
+/.idea/dictionaries/project.xml
+/.idea/cody_project_settings.xml
+/.idea/kotlinc.xml

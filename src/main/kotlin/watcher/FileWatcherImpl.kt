@@ -51,39 +51,39 @@ class FileWatcherImpl : FileWatcher {
         watchJob =
             scope.launch {
                 while (isActive) {
-                    try {
-                        val key = watchService.take()
-                        val dir = watchKeys.entries.find { it.value == key }?.key
-                        if (dir != null) {
-                            key.pollEvents().forEach { event ->
-                                val kind = event.kind()
-                                val relativePath = event.context() as Path
-                                val fullPath = dir.resolve(relativePath)
-
-                                val event =
-                                    when (kind) {
-                                        ENTRY_CREATE -> FileEvent.Created(fullPath)
-                                        ENTRY_MODIFY -> FileEvent.Modified(fullPath)
-                                        ENTRY_DELETE -> FileEvent.Deleted(fullPath)
-
-                                        else -> throw IllegalArgumentException("Unknown event kind")
-                                    }
-                                notifyListeners(event)
-                            }
+                    val key =
+                        try {
+                            watchService.take()
+                        } catch (e: ClosedWatchServiceException) {
+                            break
                         }
 
-                        val valid = key.reset()
-                        if (!valid) {
-                            watchKeys.entries.removeIf { it.value == key }
+                    if (!key.isValid) {
+                        continue
+                    }
+
+                    val dir = watchKeys.entries.find { it.value == key }?.key
+                    if (dir != null) {
+                        key.pollEvents().forEach { event ->
+                            val kind = event.kind()
+                            val relativePath = event.context() as Path
+                            val fullPath = dir.resolve(relativePath)
+
+                            val event =
+                                when (kind) {
+                                    ENTRY_CREATE -> FileEvent.Created(fullPath)
+                                    ENTRY_MODIFY -> FileEvent.Modified(fullPath)
+                                    ENTRY_DELETE -> FileEvent.Deleted(fullPath)
+
+                                    else -> throw IllegalArgumentException("Unknown event kind")
+                                }
+                            notifyListeners(event)
                         }
-                    } catch (e: ClosedWatchServiceException) {
-                        // todo: handle this exception
-                        throw NotImplementedError()
-                        break // stop the loop if service is closed
-                    } catch (e: Exception) {
-                        throw NotImplementedError()
-                        // todo: handle this exception
-                        // log or handle other exceptions as needed
+                    }
+
+                    val valid = key.reset()
+                    if (!valid) {
+                        watchKeys.entries.removeIf { it.value == key }
                     }
                 }
             }
