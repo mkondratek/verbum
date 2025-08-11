@@ -5,18 +5,16 @@ import watcher.FileEvent
 import watcher.FileWatcher
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.isDirectory
 import kotlin.io.path.readText
 
-// todo: add thread safety
-// todo: handle errors from readText and list
-// todo: consider walkFileTree instead of list
 class VerbumIndexer(
     private val tokenizer: Tokenizer,
     private val fileWatcher: FileWatcher,
 ) : Indexer {
-    private val index = mutableMapOf<String, MutableSet<Path>>()
-    private val indexReverse = mutableMapOf<Path, MutableSet<String>>()
+    private val index = ConcurrentHashMap<String, MutableSet<Path>>()
+    private val indexReverse = ConcurrentHashMap<Path, MutableSet<String>>()
 
     init {
         fileWatcher.addListener { event ->
@@ -78,6 +76,7 @@ class VerbumIndexer(
         action: (Path) -> Unit,
     ) {
         if (path.isDirectory()) {
+            // todo: consider using Files.walk here or smth else
             Files.list(path).use { stream ->
                 stream.forEach {
                     walkAndExecute(it, action)
@@ -88,20 +87,20 @@ class VerbumIndexer(
         }
     }
 
-    private fun indexFile(file: Path) {
-        val tokens = tokenizer.tokenize(file.readText())
+    private fun indexFile(path: Path) {
+        val tokens = tokenizer.tokenize(path.readText())
         tokens
             .forEach {
-                index.computeIfAbsent(it) { mutableSetOf() }.add(file)
+                index.computeIfAbsent(it) { ConcurrentHashMap.newKeySet() }.add(path)
             }
 
-        indexReverse[file] = tokens.toMutableSet()
+        indexReverse[path] = ConcurrentHashMap.newKeySet<String>().apply { addAll(tokens) }
     }
 
     private fun deindexFile(file: Path) {
-        val tokens = indexReverse.getOrDefault(file, mutableSetOf())
+        val tokens = indexReverse.getOrDefault(file, ConcurrentHashMap.newKeySet())
         tokens.forEach {
-            val paths = index.getOrDefault(it, mutableSetOf())
+            val paths = index.getOrDefault(it, ConcurrentHashMap.newKeySet())
             paths.remove(file)
             if (paths.isEmpty()) {
                 index.remove(it)
