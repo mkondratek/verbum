@@ -1,5 +1,6 @@
 package indexer
 
+import tokenizer.Token
 import tokenizer.Tokenizer
 import watcher.FileEvent
 import watcher.FileWatcher
@@ -13,8 +14,8 @@ class VerbumIndexer(
     private val tokenizer: Tokenizer,
     private val fileWatcher: FileWatcher,
 ) : Indexer {
-    private val index = ConcurrentHashMap<String, MutableSet<Path>>()
-    private val indexReverse = ConcurrentHashMap<Path, MutableSet<String>>()
+    private val index = ConcurrentHashMap<Token, MutableSet<Path>>()
+    private val indexReverse = ConcurrentHashMap<Path, MutableSet<Token>>()
 
     init {
         fileWatcher.addListener { event ->
@@ -61,7 +62,7 @@ class VerbumIndexer(
         indexReverse.keys.filter { it.startsWith(path) }.forEach { deindexFile(it) }
     }
 
-    override fun query(word: String): Set<Path> = index[word]?.toSet() ?: emptySet()
+    override fun query(word: String): Set<Path> = index[Token(word)]?.toSet() ?: emptySet()
 
     override fun startWatching() {
         fileWatcher.start()
@@ -94,7 +95,7 @@ class VerbumIndexer(
                 index.computeIfAbsent(it) { ConcurrentHashMap.newKeySet() }.add(path)
             }
 
-        indexReverse[path] = ConcurrentHashMap.newKeySet<String>().apply { addAll(tokens) }
+        indexReverse[path] = ConcurrentHashMap.newKeySet<Token>().apply { addAll(tokens) }
     }
 
     private fun deindexFile(file: Path) {
