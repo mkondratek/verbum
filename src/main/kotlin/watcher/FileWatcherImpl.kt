@@ -13,12 +13,14 @@ import java.nio.file.StandardWatchEventKinds.ENTRY_CREATE
 import java.nio.file.StandardWatchEventKinds.ENTRY_DELETE
 import java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
 import java.nio.file.WatchKey
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.io.path.isDirectory
 
 class FileWatcherImpl : FileWatcher {
-    private val listeners = mutableListOf<(FileEvent) -> Unit>()
     private val watchService = FileSystems.getDefault().newWatchService()
-    private val watchKeys = mutableMapOf<Path, WatchKey>()
+    private val listeners = CopyOnWriteArrayList<(FileEvent) -> Unit>()
+    private val watchKeys = ConcurrentHashMap<Path, WatchKey>()
 
     private var watchJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
