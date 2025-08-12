@@ -28,11 +28,14 @@
 </section>
 
 <section>
-    <h2>Indexer Controls</h2>
-    <div class="row">
-        <button onclick="startIndexer()">Start Watching</button>
-        <button onclick="stopIndexer()">Stop Watching</button>
+    <div class="indexer-control">
+        <label class="switch">
+            <input id="indexerSwitch" type="checkbox">
+            <span class="slider"></span>
+        </label>
+        <span id="indexerStatus">Indexer is OFF</span>
     </div>
+
     <div id="status"></div>
 </section>
 
@@ -86,23 +89,20 @@
         }
     }
 
-    async function startIndexer() {
-        const res = await fetch('/api/indexer/start', { method: 'POST' });
-        if (res.ok) {
-            document.getElementById('status').textContent = 'Indexer started watching.';
-        } else {
-            document.getElementById('status').textContent = 'Failed to start indexer.';
-        }
-    }
+    document.addEventListener("DOMContentLoaded", () => {
+        const switchEl = document.getElementById("indexerSwitch");
+        const statusEl = document.getElementById("indexerStatus");
 
-    async function stopIndexer() {
-        const res = await fetch('/api/indexer/stop', { method: 'POST' });
-        if (res.ok) {
-            document.getElementById('status').textContent = 'Indexer stopped watching.';
-        } else {
-            document.getElementById('status').textContent = 'Failed to stop indexer.';
-        }
-    }
+        switchEl.addEventListener("change", async () => {
+            if (switchEl.checked) {
+                statusEl.textContent = "Indexer is ON";
+                await fetch("/start", { method: "POST" });
+            } else {
+                statusEl.textContent = "Indexer is OFF";
+                await fetch("/stop", { method: "POST" });
+            }
+        });
+    });
 </script>
 </body>
 </html>
