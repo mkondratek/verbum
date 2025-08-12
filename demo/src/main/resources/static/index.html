@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8"/>
     <title>Verbum Indexer Control</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
 <h1>Verbum Indexer Control Panel</h1>
@@ -11,7 +11,7 @@
 <section>
     <h2>Query Index</h2>
     <div class="row">
-        <input type="text" id="queryWord" placeholder="Enter word to query" />
+        <input type="text" id="queryWord" placeholder="Enter word to query"/>
         <button onclick="queryIndexer()">Query</button>
     </div>
     <div id="results"></div>
@@ -20,7 +20,8 @@
 <section>
     <h2>Manage Paths</h2>
     <div class="row">
-        <input type="text" id="pathInput" placeholder="Enter file or directory path" />
+        <input type="text" id="pathInput"
+               placeholder="Enter file or directory path"/>
         <button onclick="addPath()">Add</button>
         <button onclick="removePath()">Remove</button>
     </div>
@@ -28,15 +29,27 @@
 </section>
 
 <section>
-    <div class="indexer-control">
-        <label class="switch">
-            <input id="indexerSwitch" type="checkbox">
-            <span class="slider"></span>
-        </label>
-        <span id="indexerStatus">Indexer is OFF</span>
+    <div class="row">
+        <div class="auto-query-control">
+            <label>Auto-Query</label>
+            <label class="switch">
+                <input id="autoQuerySwitch" type="checkbox">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="indexer-control">
+            <label>Indexer</label>
+            <label class="switch">
+                <input id="indexerSwitch" type="checkbox">
+                <span class="slider"></span>
+            </label>
+        </div>
     </div>
 
-    <div id="status"></div>
+    <div class="status-log">
+        <label>Status Log</label>
+        <textarea id="statusLog" readonly></textarea>
+    </div>
 </section>
 
 <script>
@@ -59,8 +72,8 @@
         }
         const res = await fetch('/api/indexer/add', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ path })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({path})
         });
         if (res.ok) {
             document.getElementById('pathStatus').textContent = `Path added: ${path}`;
@@ -78,8 +91,8 @@
         }
         const res = await fetch('/api/indexer/remove', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ path })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({path})
         });
         if (res.ok) {
             document.getElementById('pathStatus').textContent = `Path removed: ${path}`;
@@ -96,12 +109,41 @@
         switchEl.addEventListener("change", async () => {
             if (switchEl.checked) {
                 statusEl.textContent = "Indexer is ON";
-                await fetch("/start", { method: "POST" });
+                await fetch("/start", {method: "POST"});
             } else {
                 statusEl.textContent = "Indexer is OFF";
-                await fetch("/stop", { method: "POST" });
+                await fetch("/stop", {method: "POST"});
             }
         });
+
+        const autoQuerySwitch = document.getElementById("autoQuerySwitch");
+        const autoQueryStatus = document.getElementById("autoQueryStatus");
+        let autoQueryInterval = null;
+
+        autoQuerySwitch.addEventListener("change", () => {
+            if (autoQuerySwitch.checked) {
+                autoQueryStatus.textContent = "Auto-Query is ON";
+                autoQueryInterval = setInterval(runAutoQuery, 2000); // every 2s
+            } else {
+                autoQueryStatus.textContent = "Auto-Query is OFF";
+                clearInterval(autoQueryInterval);
+            }
+        });
+
+        async function runAutoQuery() {
+            const queryInput = document.getElementById("queryInput");
+            if (queryInput && queryInput.value.trim() !== "") {
+                const response = await fetch(`/query?word=${encodeURIComponent(queryInput.value)}`);
+                const results = await response.json();
+                displayQueryResults(results);
+            }
+        }
+
+        function displayQueryResults(results) {
+            const resultsEl = document.getElementById("results");
+            if (!resultsEl) return;
+            resultsEl.innerHTML = results.map(r => `<li>${r}</li>`).join("");
+        }
     });
 </script>
 </body>
