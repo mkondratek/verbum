@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Verbum Indexer Control</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<h1>Verbum Indexer Control Panel</h1>
+
+<section>
+    <h2>Query Index</h2>
+    <div class="row">
+        <input type="text" id="queryWord" placeholder="Enter word to query" />
+        <button onclick="queryIndexer()">Query</button>
+    </div>
+    <div id="results"></div>
+</section>
+
+<section>
+    <h2>Manage Paths</h2>
+    <div class="row">
+        <input type="text" id="pathInput" placeholder="Enter file or directory path" />
+        <button onclick="addPath()">Add</button>
+        <button onclick="removePath()">Remove</button>
+    </div>
+    <div id="pathStatus"></div>
+</section>
+
+<section>
+    <h2>Indexer Controls</h2>
+    <div class="row">
+        <button onclick="startIndexer()">Start Watching</button>
+        <button onclick="stopIndexer()">Stop Watching</button>
+    </div>
+    <div id="status"></div>
+</section>
+
+<script>
+    async function queryIndexer() {
+        const word = document.getElementById('queryWord').value.trim();
+        if (!word) {
+            alert('Please enter a word to query');
+            return;
+        }
+        const res = await fetch(`/api/indexer/query?word=${encodeURIComponent(word)}`);
+        const data = await res.json();
+        document.getElementById('results').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function addPath() {
+        const path = document.getElementById('pathInput').value.trim();
+        if (!path) {
+            alert('Please enter a path to add');
+            return;
+        }
+        const res = await fetch('/api/indexer/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path })
+        });
+        if (res.ok) {
+            document.getElementById('pathStatus').textContent = `Path added: ${path}`;
+        } else {
+            const error = await res.text();
+            document.getElementById('pathStatus').textContent = `Failed to add path: ${error}`;
+        }
+    }
+
+    async function removePath() {
+        const path = document.getElementById('pathInput').value.trim();
+        if (!path) {
+            alert('Please enter a path to remove');
+            return;
+        }
+        const res = await fetch('/api/indexer/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path })
+        });
+        if (res.ok) {
+            document.getElementById('pathStatus').textContent = `Path removed: ${path}`;
+        } else {
+            const error = await res.text();
+            document.getElementById('pathStatus').textContent = `Failed to remove path: ${error}`;
+        }
+    }
+
+    async function startIndexer() {
+        const res = await fetch('/api/indexer/start', { method: 'POST' });
+        if (res.ok) {
+            document.getElementById('status').textContent = 'Indexer started watching.';
+        } else {
+            document.getElementById('status').textContent = 'Failed to start indexer.';
+        }
+    }
+
+    async function stopIndexer() {
+        const res = await fetch('/api/indexer/stop', { method: 'POST' });
+        if (res.ok) {
+            document.getElementById('status').textContent = 'Indexer stopped watching.';
+        } else {
+            document.getElementById('status').textContent = 'Failed to stop indexer.';
+        }
+    }
+</script>
+</body>
+</html>

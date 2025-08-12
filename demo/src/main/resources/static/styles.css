@@ -1,0 +1,41 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 600px;
+    margin: 2rem auto;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    margin: 0.5rem 0;
+    gap: 0.5rem;
+}
+
+input[type="text"] {
+    flex: 1;
+    padding: 0.4rem;
+}
+
+button {
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+}
+
+#results,
+#status,
+#pathStatus {
+    white-space: pre-wrap;
+    background: #f4f4f4;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    margin-top: 0.5rem;
+    min-height: 2rem;
+}
+
+section {
+    margin-bottom: 1.5rem;
+}
+
+h2 {
+    margin-bottom: 0.3rem;
+}

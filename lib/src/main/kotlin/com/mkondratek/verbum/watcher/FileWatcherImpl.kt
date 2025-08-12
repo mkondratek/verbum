@@ -40,7 +40,7 @@ class FileWatcherImpl : FileWatcher {
                 )
             watchKeys[path] = key
         } else {
-            throw IllegalArgumentException("Can only watch directories")
+            throw IllegalArgumentException("Can only watch directories. Got: $path")
         }
     }
 

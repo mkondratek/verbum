@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import com.mkondratek.verbum.tokenizer.SimpleTokenizer
 import com.mkondratek.verbum.waitFor
+import com.mkondratek.verbum.watcher.FileWatcherFactoryImpl
 import com.mkondratek.verbum.watcher.FileWatcherImpl
 import java.nio.file.Files
 import java.nio.file.Path
@@ -20,7 +21,7 @@ class VerbumIndexerIntegrationTest {
 
     @BeforeEach
     fun setup() {
-        indexer = VerbumIndexer(SimpleTokenizer(), FileWatcherImpl())
+        indexer = VerbumIndexer(SimpleTokenizer(), FileWatcherFactoryImpl())
     }
 
     @AfterEach
@@ -38,8 +39,6 @@ class VerbumIndexerIntegrationTest {
 
         waitFor { setOf(file) == indexer.query("hello") }
         waitFor { setOf(file) == indexer.query("world") }
-
-        indexer.stopWatching()
     }
 
     @Test
@@ -56,8 +55,6 @@ class VerbumIndexerIntegrationTest {
 
         waitFor { indexer.query("hello").isEmpty() }
         waitFor { indexer.query("world").isEmpty() }
-
-        indexer.stopWatching()
     }
 
     @Test
@@ -86,8 +83,6 @@ class VerbumIndexerIntegrationTest {
         // Wait for indexer to pick up fileB (since watching the directory)
         waitFor { setOf(fileB) == indexer.query("carrot") }
         waitFor { setOf(fileB) == indexer.query("date") }
-
-        indexer.stopWatching()
     }
 
     @Test
@@ -114,8 +109,6 @@ class VerbumIndexerIntegrationTest {
 
         waitFor { setOf(fileB) == indexer.query("elephant") }
         waitFor { setOf(fileB) == indexer.query("fox") }
-
-        indexer.stopWatching()
     }
 
     @Test
@@ -136,8 +129,6 @@ class VerbumIndexerIntegrationTest {
 
         waitFor { indexer.query("initial").isEmpty() }
         waitFor { setOf(file) == indexer.query("updated") }
-
-        indexer.stopWatching()
     }
 
     @Test
@@ -157,8 +148,6 @@ class VerbumIndexerIntegrationTest {
 
         waitFor { indexer.query("apple").isEmpty() }
         waitFor { indexer.query("carrot").isEmpty() }
-
-        indexer.stopWatching()
     }
 
     @Test
@@ -173,8 +162,6 @@ class VerbumIndexerIntegrationTest {
 
         val result = indexer.query("unknown_token_123")
         assertTrue(result.isEmpty())
-
-        indexer.stopWatching()
     }
 
     @Test
@@ -192,10 +179,36 @@ class VerbumIndexerIntegrationTest {
         file.writeText("second content")
         indexer.addPath(file)
         waitFor { setOf(file) == indexer.query("second") }
-
-        indexer.stopWatching()
     }
 
+    @Test
+    fun `indexer stops and restarts correctly`() {
+        // Start watching and index first file
+        indexer.startWatching()
+        indexer.addPath(tempDir)
+        val fileA = tempDir.resolve("fileA.txt")
+        Files.writeString(fileA, "apple banana")
+        waitFor { setOf(fileA) == indexer.query("apple") }
+        waitFor { setOf(fileA) == indexer.query("banana") }
 
+        // Stop watching
+        indexer.stopWatching()
+
+        // Modify file while stopped (should NOT update index)
+        Files.writeString(fileA, "apple cherry")
+        // Query should still show old content since watcher stopped
+        Thread.sleep(500) // give some time to be sure
+        assertTrue(indexer.query("banana").contains(fileA))
+        assertTrue(indexer.query("cherry").isEmpty())
+
+        // Start watching again
+        indexer.startWatching()
+
+        // Modify file again (should update index now)
+        Files.writeString(fileA, "apple cherry")
+        Thread.sleep(500) // give some time to be sure
+        waitFor { setOf(fileA) == indexer.query("cherry") }
+        waitFor { indexer.query("banana").isEmpty() }
+    }
 
 }

@@ -4,6 +4,7 @@ import com.mkondratek.verbum.tokenizer.Token
 import com.mkondratek.verbum.tokenizer.Tokenizer
 import com.mkondratek.verbum.watcher.FileEvent
 import com.mkondratek.verbum.watcher.FileWatcher
+import com.mkondratek.verbum.watcher.FileWatcherFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -12,36 +13,41 @@ import kotlin.io.path.readText
 
 class VerbumIndexer(
   private val tokenizer: Tokenizer,
-  private val fileWatcher: FileWatcher,
+  private val fileWatcherFactory: FileWatcherFactory,
 ) : Indexer {
+    @Volatile
+    private var fileWatcher: FileWatcher
+
     private val index = ConcurrentHashMap<Token, MutableSet<Path>>()
     private val indexReverse = ConcurrentHashMap<Path, MutableSet<Token>>()
-
-    init {
-        fileWatcher.addListener { event ->
-            when (event) {
-                is FileEvent.Created -> {
-                    if (Files.isRegularFile(event.path)) {
-                        indexFile(event.path)
-                    }
-                }
-
-                is FileEvent.Modified -> {
-                    deindexFile(event.path)
+    private val fileEventListener: (FileEvent) -> Unit = { event ->
+        when (event) {
+            is FileEvent.Created -> {
+                if (Files.isRegularFile(event.path)) {
                     indexFile(event.path)
                 }
+            }
 
-                is FileEvent.Deleted -> {
-                    if (Files.isRegularFile(event.path)) {
-                        deindexFile(event.path)
-                    } else {
-                        indexReverse.keys
-                            .filter { it.startsWith(event.path) }
-                            .forEach { deindexFile(it) }
-                    }
+            is FileEvent.Modified -> {
+                deindexFile(event.path)
+                indexFile(event.path)
+            }
+
+            is FileEvent.Deleted -> {
+                if (Files.isRegularFile(event.path)) {
+                    deindexFile(event.path)
+                } else {
+                    indexReverse.keys
+                        .filter { it.startsWith(event.path) }
+                        .forEach { deindexFile(it) }
                 }
             }
         }
+    }
+
+    init {
+        fileWatcher = fileWatcherFactory.create()
+        fileWatcher.addListener(fileEventListener)
     }
 
     override fun addPath(path: Path) {
@@ -64,10 +70,17 @@ class VerbumIndexer(
 
     override fun query(word: String): Set<Path> = index[Token(word)]?.toSet() ?: emptySet()
 
+    @Synchronized
     override fun startWatching() {
+        fileWatcher = fileWatcherFactory.create()
+        fileWatcher.addListener(fileEventListener)
         fileWatcher.start()
+        indexReverse.keys.filter { it.isDirectory() }.forEach { fileWatcher.watch(it) }
+        index.clear()
+        indexReverse.keys.forEach { indexFile(it) }
     }
 
+    @Synchronized
     override fun stopWatching() {
         fileWatcher.stop()
     }
