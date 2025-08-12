@@ -10,7 +10,10 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <div class="container">
         <div class="header">
-            <h1>Verbum Indexer Control Panel</h1>
+            <div class="title-section">
+                <h1>Verbum File Search Engine</h1>
+                <p class="subtitle">Index your files and search through their content instantly</p>
+            </div>
             <button 
                 type="button" 
                 class="help-button" 
@@ -18,19 +21,23 @@
                 aria-label="Show keyboard shortcuts"
                 title="Show keyboard shortcuts (Press ? for shortcuts)"
             >
-                Shortcuts
+                Help
             </button>
         </div>
         
         <main class="content" id="main-content">
             <section class="card" aria-labelledby="query-heading">
-                <h2 id="query-heading">Query Index</h2>
+                <div class="section-header">
+                    <h2 id="query-heading">🔍 Search Your Files</h2>
+                    <div class="tooltip" data-tooltip="Search for any word across all your indexed files. Files must be added to indexing first.">?</div>
+                </div>
+                <p class="section-description">Find files containing specific words from all your indexed content</p>
                 <form class="row" role="search" aria-label="Search the index" onsubmit="event.preventDefault(); queryIndexer();">
                     <label for="queryWord" class="sr-only">Search term</label>
                     <input 
                         type="text" 
                         id="queryWord" 
-                        placeholder="Enter word to query"
+                        placeholder="Type any word to search (e.g., 'function', 'TODO', 'import')"
                         aria-describedby="query-help"
                         autocomplete="off"
                         tabindex="1"
@@ -39,7 +46,7 @@
                         type="submit" 
                         aria-describedby="search-shortcut"
                         tabindex="2"
-                    >Search</button>
+                    >Search Files</button>
                     <span id="query-help" class="sr-only">Press Enter to search or Escape to clear</span>
                     <span id="search-shortcut" class="sr-only">Keyboard shortcut: Enter</span>
                 </form>
@@ -53,15 +60,19 @@
             </section>
 
             <section class="card" aria-labelledby="paths-heading">
-                <h2 id="paths-heading">Manage Paths</h2>
+                <div class="section-header">
+                    <h2 id="paths-heading">📁 Add Files & Folders to Index</h2>
+                    <div class="tooltip" data-tooltip="Add files or folders to make their content searchable. The indexer will scan all text files and create a searchable index.">?</div>
+                </div>
+                <p class="section-description">Choose files or folders to make their content searchable</p>
                 <form class="row" aria-label="Add or remove indexing paths">
                     <div class="input-group">
-                        <label for="pathInput" class="sr-only">File or directory path</label>
+                        <label for="pathInput" class="sr-only">File or directory path to index</label>
                         <div class="input-wrapper">
                             <input 
                                 type="text" 
                                 id="pathInput" 
-                                placeholder="Enter absolute path"
+                                placeholder="Enter path to file or folder to index (e.g., /Users/john/Documents)"
                                 aria-describedby="path-help path-validation"
                                 autocomplete="off"
                                 tabindex="3"
@@ -71,9 +82,9 @@
                                 type="button" 
                                 class="browse-button" 
                                 onclick="openFilePicker()" 
-                                aria-label="Browse for file or directory"
+                                aria-label="Browse for file or directory to index"
                                 tabindex="3.5"
-                                title="Browse for file or directory"
+                                title="Browse for file or directory to index"
                             >
                                 📁
                             </button>
@@ -89,26 +100,36 @@
                             aria-describedby="add-path-desc"
                             tabindex="4"
                             disabled
-                        >Add</button>
+                        >Add to Index</button>
                     </div>
-                    <span id="path-help" class="sr-only">Enter an absolute file or directory path to add to or remove from indexing</span>
-                    <span id="add-path-desc" class="sr-only">Add the specified path to indexing</span>
-                    <span id="remove-path-desc" class="sr-only">Remove the specified path from indexing</span>
+                    <span id="path-help" class="sr-only">Enter a file or directory path to add to or remove from the search index</span>
+                    <span id="add-path-desc" class="sr-only">Add the specified path to the search index</span>
+                    <span id="remove-path-desc" class="sr-only">Remove the specified path from the search index</span>
                 </form>
                 
                 <div class="path-list" id="pathList" aria-labelledby="paths-list-heading">
-                    <h3 id="paths-list-heading" class="path-list-title">Indexed Paths</h3>
+                    <div class="section-header">
+                        <h3 id="paths-list-heading" class="path-list-title">📋 Currently Indexed</h3>
+                        <div class="tooltip" data-tooltip="These files and folders are being monitored and their content is searchable. Changes to these files are automatically indexed.">?</div>
+                    </div>
                     <div id="pathsContainer" class="paths-container" role="list" aria-live="polite">
-                        <div class="empty-state">No paths added yet</div>
+                        <div class="empty-state">No files or folders indexed yet. Add some above to start searching!</div>
                     </div>
                 </div>
             </section>
 
             <section class="card" aria-labelledby="control-heading">
-                <h2 id="control-heading">Control Panel</h2>
+                <div class="section-header">
+                    <h2 id="control-heading">⚙️ Settings & Monitoring</h2>
+                    <div class="tooltip" data-tooltip="Control how the search engine behaves and monitor its activity.">?</div>
+                </div>
+                <p class="section-description">Configure automatic features and monitor system activity</p>
                 <div class="controls-row" role="group" aria-labelledby="control-heading">
                     <div class="control-group">
-                        <label class="control-label" for="autoQuerySwitch">Auto-Query</label>
+                        <div class="control-header">
+                            <label class="control-label" for="autoQuerySwitch">🔄 Auto-Refresh Search</label>
+                            <div class="tooltip" data-tooltip="When enabled, your search results will automatically update every 2 seconds to show the latest matches.">?</div>
+                        </div>
                         <label class="switch" aria-describedby="auto-query-desc">
                             <input 
                                 id="autoQuerySwitch" 
@@ -119,10 +140,13 @@
                             >
                             <span class="slider" aria-hidden="true"></span>
                         </label>
-                        <span id="auto-query-desc" class="sr-only">Automatically repeat searches every 2 seconds</span>
+                        <span id="auto-query-desc" class="sr-only">Automatically refresh search results every 2 seconds</span>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="indexerSwitch">Indexer Status</label>
+                        <div class="control-header">
+                            <label class="control-label" for="indexerSwitch">🏃 Live File Monitoring</label>
+                            <div class="tooltip tooltip-right" data-tooltip="When enabled, the system automatically detects changes to your files and updates the search index in real-time.">?</div>
+                        </div>
                         <label class="switch" aria-describedby="indexer-desc">
                             <input 
                                 id="indexerSwitch" 
@@ -133,21 +157,24 @@
                             >
                             <span class="slider" aria-hidden="true"></span>
                         </label>
-                        <span id="indexer-desc" class="sr-only">Turn the indexer service on or off</span>
+                        <span id="indexer-desc" class="sr-only">Enable or disable real-time file monitoring and indexing</span>
                     </div>
                 </div>
 
                 <div class="status-log" role="region" aria-labelledby="log-heading">
-                    <label id="log-heading" for="statusLog">Status Log</label>
+                    <div class="section-header">
+                        <label id="log-heading" for="statusLog">📝 Activity Log</label>
+                        <div class="tooltip" data-tooltip="Real-time log showing what the search engine is doing - indexing files, processing searches, detecting changes, etc.">?</div>
+                    </div>
                     <textarea 
                         id="statusLog" 
                         readonly 
-                        placeholder="System logs will appear here..."
+                        placeholder="System activity will be logged here - file indexing, searches, changes, etc..."
                         aria-describedby="log-help"
                         aria-live="polite"
                         tabindex="8"
                     ></textarea>
-                    <span id="log-help" class="sr-only">Live log of system events and operations</span>
+                    <span id="log-help" class="sr-only">Live log showing search engine activity and operations</span>
                 </div>
             </section>
         </main>

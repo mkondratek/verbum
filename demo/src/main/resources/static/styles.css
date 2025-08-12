@@ -60,14 +60,14 @@ body {
     color: white;
     padding: var(--spacing-lg) var(--spacing-xl);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     position: relative;
     backdrop-filter: blur(10px);
     box-shadow: var(--shadow-md);
 }
 
-.header h1 {
+.title-section h1 {
     margin: 0;
     font-size: 2rem;
     font-weight: 700;
@@ -76,6 +76,14 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.subtitle {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1rem;
+    margin: 0.5rem 0 0 0;
+    font-weight: 300;
+    opacity: 0.9;
 }
 
 .help-button {
@@ -163,7 +171,7 @@ body {
 input[type="text"] {
     flex: 1;
     padding: var(--spacing-md);
-    padding-right: 40px;
+    padding-right: 50px;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     font-size: 1rem;
@@ -200,16 +208,21 @@ input[type="text"].invalid:focus {
 
 .browse-button {
     position: absolute;
-    right: 8px;
+    right: 4px;
     background: none;
     border: none;
-    font-size: 1rem;
+    font-size: 0.9rem;
     cursor: pointer;
-    padding: var(--spacing-xs);
+    padding: 6px;
     border-radius: 4px;
     color: var(--text-secondary);
     transition: all 0.2s ease;
     z-index: 1;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .browse-button:hover {
@@ -342,6 +355,120 @@ button.secondary:disabled {
     gap: var(--spacing-sm);
 }
 
+/* Section headers with tooltips */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-xs);
+    flex-wrap: nowrap;
+}
+
+.section-description {
+    color: var(--text-primary) !important;
+    font-size: 0.9rem;
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.7;
+    line-height: 1.4;
+    font-style: italic;
+    margin-top: 0;
+    display: block;
+    visibility: visible;
+}
+
+/* Control headers */
+.control-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+/* Tooltip system */
+.tooltip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    font-size: 11px;
+    font-weight: normal;
+    cursor: help;
+    position: relative;
+    transition: all 0.2s ease;
+    opacity: 0.5;
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: none;
+    flex-shrink: 0;
+    margin-left: 4px;
+}
+
+.tooltip:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.tooltip::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text-primary);
+    color: white;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: 8px;
+    white-space: normal;
+    font-size: 0.8rem;
+    font-weight: normal;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 1000;
+    box-shadow: var(--shadow-md);
+    min-width: 200px;
+    max-width: 280px;
+    width: max-content;
+    text-align: left;
+    line-height: 1.4;
+}
+
+/* Fix tooltip overflow for elements near the right edge */
+.tooltip-right::before {
+    left: auto;
+    right: 0;
+    transform: none;
+}
+
+.tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: 105%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--text-primary);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 1000;
+}
+
+/* Adjust arrow position for right-aligned tooltips */
+.tooltip-right::after {
+    left: auto;
+    right: 8px;
+    transform: none;
+}
+
+.tooltip:hover::before,
+.tooltip:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
 .card h2::before {
     content: '';
     width: 4px;
@@ -372,6 +499,11 @@ button.secondary:disabled {
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     transition: border-color 0.2s;
+}
+
+.control-group .control-header {
+    flex: 0 0 auto;
+    max-width: none;
 }
 
 .control-group:hover {
