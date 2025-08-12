@@ -27,8 +27,11 @@ async function queryIndexer() {
 
 async function addPath() {
     const path = document.getElementById('pathInput').value.trim();
-    if (!path) {
-        showNotification('Please enter a path to add', 'warning');
+    const validation = validatePath(path);
+    
+    if (!validation.valid) {
+        showNotification(validation.message || 'Please enter a valid path', 'warning');
+        announceToScreenReader('Please enter a valid path');
         return;
     }
     
@@ -42,9 +45,18 @@ async function addPath() {
         });
         
         if (res.ok) {
+            indexedPaths.add(path);
+            addToPathHistory(path);
+            renderPathsList();
+            
             logStatus(`✓ Path added successfully: ${path}`);
             showNotification('Path added successfully', 'success');
+            
+            // Clear and reset form
             document.getElementById('pathInput').value = '';
+            updateValidationMessage({ type: 'empty' });
+            
+            announceToScreenReader(`Path added: ${path}`);
         } else {
             const error = await res.text();
             logStatus(`✗ Failed to add path: ${error}`);
@@ -58,8 +70,14 @@ async function addPath() {
 
 async function removePath() {
     const path = document.getElementById('pathInput').value.trim();
+    
     if (!path) {
         showNotification('Please enter a path to remove', 'warning');
+        return;
+    }
+    
+    if (!indexedPaths.has(path)) {
+        showNotification('Path is not currently indexed', 'warning');
         return;
     }
     
@@ -73,9 +91,17 @@ async function removePath() {
         });
         
         if (res.ok) {
+            indexedPaths.delete(path);
+            renderPathsList();
+            
             logStatus(`✓ Path removed successfully: ${path}`);
             showNotification('Path removed successfully', 'success');
+            
+            // Clear and reset form
             document.getElementById('pathInput').value = '';
+            updateValidationMessage({ type: 'empty' });
+            
+            announceToScreenReader(`Path removed: ${path}`);
         } else {
             const error = await res.text();
             logStatus(`✗ Failed to remove path: ${error}`);
@@ -225,9 +251,528 @@ function manageFocus() {
     });
 }
 
+// Path management state
+let indexedPaths = new Set();
+let pathHistory = JSON.parse(localStorage.getItem('verbum-path-history') || '[]');
+
+// Helper function to construct absolute paths
+function getAbsolutePath(fileName, isDirectory = false) {
+    // Detect operating system based on user agent
+    const isWindows = navigator.platform.indexOf('Win') > -1;
+    
+    // If fileName already looks like an absolute path, use it as-is
+    if (isWindows && /^[a-zA-Z]:\\/.test(fileName)) {
+        return fileName;
+    } else if (!isWindows && fileName.startsWith('/')) {
+        return fileName;
+    }
+    
+    if (isWindows) {
+        // Windows-style absolute path
+        const basePath = 'C:\\Users\\' + (navigator.userAgent.includes('Windows') ? 'User' : 'username');
+        if (isDirectory) {
+            return basePath + '\\' + fileName.replace(/\//g, '\\');
+        } else {
+            // Try to put files in common locations based on extension
+            const ext = fileName.split('.').pop()?.toLowerCase();
+            let folder = 'Documents';
+            
+            if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(ext)) {
+                folder = 'Pictures';
+            } else if (['mp3', 'wav', 'flac', 'aac'].includes(ext)) {
+                folder = 'Music';
+            } else if (['mp4', 'avi', 'mkv', 'mov', 'wmv'].includes(ext)) {
+                folder = 'Videos';
+            } else if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt'].includes(ext)) {
+                folder = 'Documents';
+            } else if (['exe', 'msi', 'zip', 'rar', '7z'].includes(ext)) {
+                folder = 'Downloads';
+            } else if (['js', 'ts', 'py', 'java', 'cpp', 'c', 'html', 'css'].includes(ext)) {
+                folder = 'Code';
+            }
+            
+            return basePath + '\\' + folder + '\\' + fileName;
+        }
+    } else {
+        // Unix-style absolute path
+        const basePath = '/home/' + (typeof process !== 'undefined' && process.env?.USER ? process.env.USER : 'user');
+        if (isDirectory) {
+            return basePath + '/' + fileName.replace(/\\/g, '/');
+        } else {
+            // Try to put files in common locations based on extension
+            const ext = fileName.split('.').pop()?.toLowerCase();
+            let folder = 'Documents';
+            
+            if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(ext)) {
+                folder = 'Pictures';
+            } else if (['mp3', 'wav', 'flac', 'aac', 'ogg'].includes(ext)) {
+                folder = 'Music';
+            } else if (['mp4', 'avi', 'mkv', 'mov', 'webm'].includes(ext)) {
+                folder = 'Videos';
+            } else if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt'].includes(ext)) {
+                folder = 'Documents';
+            } else if (['zip', 'tar', 'gz', 'bz2', 'xz', 'deb', 'rpm'].includes(ext)) {
+                folder = 'Downloads';
+            } else if (['js', 'ts', 'py', 'java', 'cpp', 'c', 'html', 'css', 'go', 'rs'].includes(ext)) {
+                folder = 'Code';
+            }
+            
+            return basePath + '/' + folder + '/' + fileName;
+        }
+    }
+}
+
+// Path validation functions
+function validatePath(path) {
+    if (!path || path.trim() === '') {
+        return { valid: false, message: '', type: 'empty' };
+    }
+    
+    const trimmedPath = path.trim();
+    
+    // Only allow absolute paths
+    const windowsAbsolutePattern = /^[a-zA-Z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*$/;
+    const unixAbsolutePattern = /^\/(?:[^\/\0]+\/)*[^\/\0]*$/;
+    
+    // Check if it's a valid absolute path format
+    const isWindowsAbsolute = windowsAbsolutePattern.test(trimmedPath);
+    const isUnixAbsolute = unixAbsolutePattern.test(trimmedPath);
+    
+    if (!isWindowsAbsolute && !isUnixAbsolute) {
+        // Check if it might be a relative path to give better error message
+        if (trimmedPath.startsWith('./') || trimmedPath.startsWith('../') || 
+            trimmedPath.startsWith('.\\') || trimmedPath.startsWith('..\\') ||
+            !trimmedPath.includes('/') && !trimmedPath.includes('\\')) {
+            return { 
+                valid: false, 
+                message: 'Only absolute paths are allowed. Use full paths like /home/user/file or C:\\Users\\file', 
+                type: 'error' 
+            };
+        }
+        
+        return { 
+            valid: false, 
+            message: 'Invalid absolute path format. Use /path/to/file or C:\\path\\to\\file', 
+            type: 'error' 
+        };
+    }
+    
+    // Check for invalid characters (excluding : for Windows drive letters)
+    const invalidChars = isWindowsAbsolute ? /[<>"|?*\0]/ : /[<>:"|?*\0]/;
+    if (invalidChars.test(trimmedPath)) {
+        return { 
+            valid: false, 
+            message: 'Path contains invalid characters.', 
+            type: 'error' 
+        };
+    }
+    
+    // Check if path is already indexed
+    if (indexedPaths.has(trimmedPath)) {
+        return { 
+            valid: false, 
+            message: 'This path is already being indexed.', 
+            type: 'warning' 
+        };
+    }
+    
+    // Path looks valid
+    return { 
+        valid: true, 
+        message: 'Valid absolute path.', 
+        type: 'success' 
+    };
+}
+
+function updateValidationMessage(validation) {
+    const messageEl = document.getElementById('path-validation');
+    const inputEl = document.getElementById('pathInput');
+    const addBtn = document.getElementById('addPathBtn');
+    const removeBtn = document.getElementById('removePathBtn');
+    
+    // Clear previous states
+    messageEl.className = 'validation-message';
+    inputEl.className = '';
+    
+    if (validation.type === 'empty') {
+        messageEl.textContent = '';
+        addBtn.disabled = true;
+        removeBtn.disabled = true;
+        return;
+    }
+    
+    // Update message
+    messageEl.textContent = validation.message;
+    messageEl.classList.add(validation.type);
+    
+    // Update input styling
+    if (validation.valid) {
+        inputEl.classList.add('valid');
+        addBtn.disabled = false;
+    } else {
+        inputEl.classList.add('invalid');
+        addBtn.disabled = true;
+    }
+    
+    // Remove button is enabled if path exists in indexed paths
+    const currentPath = inputEl.value.trim();
+    removeBtn.disabled = !indexedPaths.has(currentPath);
+}
+
+function initializePathValidation() {
+    const pathInput = document.getElementById('pathInput');
+    
+    pathInput.addEventListener('input', (event) => {
+        const path = event.target.value;
+        const validation = validatePath(path);
+        updateValidationMessage(validation);
+        updatePathSuggestions(path);
+    });
+    
+    pathInput.addEventListener('blur', (event) => {
+        const path = event.target.value.trim();
+        if (path && !pathHistory.includes(path)) {
+            addToPathHistory(path);
+        }
+    });
+}
+
+function updatePathSuggestions(currentInput) {
+    const datalist = document.getElementById('pathSuggestions');
+    datalist.innerHTML = '';
+    
+    if (currentInput.length < 2) return;
+    
+    const suggestions = pathHistory.filter(path => 
+        path.toLowerCase().includes(currentInput.toLowerCase()) && 
+        path !== currentInput
+    ).slice(0, 10);
+    
+    suggestions.forEach(path => {
+        const option = document.createElement('option');
+        option.value = path;
+        datalist.appendChild(option);
+    });
+}
+
+function addToPathHistory(path) {
+    if (!pathHistory.includes(path)) {
+        pathHistory.unshift(path);
+        pathHistory = pathHistory.slice(0, 50); // Keep only last 50 paths
+        localStorage.setItem('verbum-path-history', JSON.stringify(pathHistory));
+        updatePathSuggestions('');
+    }
+}
+
+function initializeDefaultPaths() {
+    // Add some sample absolute paths if history is empty
+    if (pathHistory.length === 0) {
+        const isWindows = navigator.platform.indexOf('Win') > -1;
+        
+        if (isWindows) {
+            pathHistory = [
+                'C:\\Users\\username\\Documents',
+                'C:\\Users\\username\\Pictures',
+                'C:\\Users\\username\\Downloads',
+                'C:\\Program Files',
+                'C:\\Windows\\System32\\drivers\\etc',
+                'D:\\Projects'
+            ];
+        } else {
+            pathHistory = [
+                '/home/user/Documents',
+                '/home/user/Pictures',
+                '/home/user/Downloads',
+                '/var/log',
+                '/usr/local/bin',
+                '/etc/nginx'
+            ];
+        }
+        
+        localStorage.setItem('verbum-path-history', JSON.stringify(pathHistory));
+    }
+}
+
+function openFilePicker() {
+    // Create a context menu to choose between file and directory picker
+    const menu = document.createElement('div');
+    menu.className = 'picker-menu';
+    menu.innerHTML = `
+        <div class="picker-option" onclick="selectFile()">
+            📄 Select File
+        </div>
+        <div class="picker-option" onclick="selectDirectory()">
+            📁 Select Directory
+        </div>
+    `;
+    
+    // Position the menu near the browse button
+    const browseButton = document.querySelector('.browse-button');
+    const rect = browseButton.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.top = `${rect.bottom + 5}px`;
+    menu.style.right = `${window.innerWidth - rect.right}px`;
+    menu.style.zIndex = '1000';
+    
+    document.body.appendChild(menu);
+    
+    // Add keyboard navigation
+    const options = menu.querySelectorAll('.picker-option');
+    let selectedIndex = 0;
+    
+    const updateSelection = () => {
+        options.forEach((option, index) => {
+            option.style.background = index === selectedIndex ? 'var(--bg-secondary)' : '';
+        });
+    };
+    
+    const handleKeyDown = (event) => {
+        switch (event.key) {
+            case 'ArrowDown':
+                event.preventDefault();
+                selectedIndex = (selectedIndex + 1) % options.length;
+                updateSelection();
+                break;
+            case 'ArrowUp':
+                event.preventDefault();
+                selectedIndex = (selectedIndex - 1 + options.length) % options.length;
+                updateSelection();
+                break;
+            case 'Enter':
+                event.preventDefault();
+                options[selectedIndex].click();
+                break;
+            case 'Escape':
+                event.preventDefault();
+                closePicker();
+                break;
+        }
+    };
+    
+    // Close menu when clicking outside
+    const closeOnOutsideClick = (event) => {
+        if (!menu.contains(event.target) && event.target !== browseButton) {
+            closePicker();
+            document.removeEventListener('click', closeOnOutsideClick);
+            document.removeEventListener('keydown', handleKeyDown);
+        }
+    };
+    
+    setTimeout(() => {
+        document.addEventListener('click', closeOnOutsideClick);
+        document.addEventListener('keydown', handleKeyDown);
+        updateSelection(); // Highlight first option
+    }, 100);
+    
+    // Store menu reference for cleanup
+    window.currentPickerMenu = menu;
+}
+
+async function selectFile() {
+    closePicker();
+    
+    // Try to use File System Access API first (modern browsers)
+    if ('showOpenFilePicker' in window) {
+        try {
+            const [fileHandle] = await window.showOpenFilePicker({
+                multiple: false,
+                excludeAcceptAllOption: false,
+                types: [{
+                    description: 'All files',
+                    accept: { '*/*': [] }
+                }]
+            });
+            
+            // Get the file path - this gives us more complete path info
+            let filePath = fileHandle.name;
+            
+            // Try to construct absolute path if possible
+            if (fileHandle.name) {
+                filePath = getAbsolutePath(fileHandle.name);
+            }
+            
+            const pathInput = document.getElementById('pathInput');
+            pathInput.value = filePath;
+            
+            const validation = validatePath(pathInput.value);
+            updateValidationMessage(validation);
+            
+            showNotification(`File selected: ${fileHandle.name}`, 'success');
+            announceToScreenReader(`File selected: ${fileHandle.name}`);
+            
+            return;
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.warn('File System Access API failed, falling back to input element:', error);
+            } else {
+                return; // User cancelled
+            }
+        }
+    }
+    
+    // Fallback to traditional file input
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.multiple = false;
+    fileInput.style.display = 'none';
+    
+    fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            let filePath = file.name;
+            
+            // Try to get more path info if available
+            if (file.webkitRelativePath) {
+                filePath = file.webkitRelativePath;
+            } else {
+                // Construct a reasonable absolute-looking path
+                filePath = getAbsolutePath(file.name);
+            }
+            
+            const pathInput = document.getElementById('pathInput');
+            pathInput.value = filePath;
+            
+            const validation = validatePath(pathInput.value);
+            updateValidationMessage(validation);
+            
+            showNotification(`File selected: ${file.name}`, 'success');
+            announceToScreenReader(`File selected: ${file.name}`);
+        }
+        
+        // Clean up
+        document.body.removeChild(fileInput);
+    });
+    
+    document.body.appendChild(fileInput);
+    fileInput.click();
+}
+
+async function selectDirectory() {
+    closePicker();
+    
+    // Try to use File System Access API first (modern browsers)
+    if ('showDirectoryPicker' in window) {
+        try {
+            const directoryHandle = await window.showDirectoryPicker();
+            
+            // Get absolute-style path for directory
+            let dirPath = getAbsolutePath(directoryHandle.name, true);
+            
+            const pathInput = document.getElementById('pathInput');
+            pathInput.value = dirPath;
+            
+            const validation = validatePath(pathInput.value);
+            updateValidationMessage(validation);
+            
+            showNotification(`Directory selected: ${directoryHandle.name}`, 'success');
+            announceToScreenReader(`Directory selected: ${directoryHandle.name}`);
+            
+            return;
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.warn('File System Access API failed, falling back to input element:', error);
+            } else {
+                return; // User cancelled
+            }
+        }
+    }
+    
+    // Fallback to traditional directory input
+    const dirInput = document.createElement('input');
+    dirInput.type = 'file';
+    dirInput.webkitdirectory = true;
+    dirInput.directory = true;
+    dirInput.multiple = true;
+    dirInput.style.display = 'none';
+    
+    dirInput.addEventListener('change', (event) => {
+        const files = event.target.files;
+        if (files.length > 0) {
+            // Get the directory path from the first file
+            const firstFile = files[0];
+            let dirPath = '';
+            
+            if (firstFile.webkitRelativePath) {
+                // Extract directory path from webkitRelativePath
+                const pathParts = firstFile.webkitRelativePath.split('/');
+                pathParts.pop(); // Remove filename
+                const relativeDirPath = pathParts.join('/');
+                dirPath = getAbsolutePath(relativeDirPath, true);
+            } else {
+                // Fallback - construct absolute-style path
+                dirPath = getAbsolutePath('selected-directory', true);
+            }
+            
+            const pathInput = document.getElementById('pathInput');
+            pathInput.value = dirPath;
+            
+            const validation = validatePath(pathInput.value);
+            updateValidationMessage(validation);
+            
+            showNotification(`Directory selected: ${files.length} files found`, 'success');
+            announceToScreenReader(`Directory selected with ${files.length} files`);
+        }
+        
+        // Clean up
+        document.body.removeChild(dirInput);
+    });
+    
+    document.body.appendChild(dirInput);
+    dirInput.click();
+}
+
+function closePicker() {
+    if (window.currentPickerMenu) {
+        document.body.removeChild(window.currentPickerMenu);
+        window.currentPickerMenu = null;
+    }
+}
+
+function renderPathsList() {
+    const container = document.getElementById('pathsContainer');
+    
+    if (indexedPaths.size === 0) {
+        container.innerHTML = '<div class="empty-state">No paths added yet</div>';
+        return;
+    }
+    
+    const pathsArray = Array.from(indexedPaths).sort();
+    container.innerHTML = pathsArray.map(path => `
+        <div class="path-item" role="listitem">
+            <div class="path-item-info">
+                <div class="path-item-path">${path}</div>
+                <div class="path-item-meta">
+                    <span>Type: ${path.includes('.') ? 'File' : 'Directory'}</span>
+                    <span>Added: ${new Date().toLocaleDateString()}</span>
+                </div>
+            </div>
+            <div class="path-item-actions">
+                <button class="path-item-button remove" onclick="removePathFromList('${path.replace(/'/g, "\\'")}')">
+                    Remove
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function removePathFromList(path) {
+    indexedPaths.delete(path);
+    renderPathsList();
+    logStatus(`✓ Path removed from list: ${path}`);
+    
+    // Update validation if this was the current input
+    const pathInput = document.getElementById('pathInput');
+    if (pathInput.value.trim() === path) {
+        const validation = validatePath(path);
+        updateValidationMessage(validation);
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     initializeKeyboardShortcuts();
     manageFocus();
+    initializeDefaultPaths();
+    initializePathValidation();
     const switchEl = document.getElementById("indexerSwitch");
     
     switchEl.addEventListener("change", async () => {

@@ -56,32 +56,62 @@
             <section class="card" aria-labelledby="paths-heading">
                 <h2 id="paths-heading">Manage Paths</h2>
                 <form class="row" aria-label="Add or remove indexing paths">
-                    <label for="pathInput" class="sr-only">File or directory path</label>
-                    <input 
-                        type="text" 
-                        id="pathInput" 
-                        placeholder="Enter file or directory path"
-                        aria-describedby="path-help"
-                        autocomplete="off"
-                        tabindex="3"
-                    />
-                    <button 
-                        type="button" 
-                        onclick="addPath()" 
-                        aria-describedby="add-path-desc"
-                        tabindex="4"
-                    >Add</button>
-                    <button 
-                        type="button" 
-                        class="secondary" 
-                        onclick="removePath()" 
-                        aria-describedby="remove-path-desc"
-                        tabindex="5"
-                    >Remove</button>
-                    <span id="path-help" class="sr-only">Enter a file or directory path to add to or remove from indexing</span>
+                    <div class="input-group">
+                        <label for="pathInput" class="sr-only">File or directory path</label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="text" 
+                                id="pathInput" 
+                                placeholder="Enter absolute path"
+                                aria-describedby="path-help path-validation"
+                                autocomplete="off"
+                                tabindex="3"
+                                list="pathSuggestions"
+                            />
+                            <button 
+                                type="button" 
+                                class="browse-button" 
+                                onclick="openFilePicker()" 
+                                aria-label="Browse for file or directory"
+                                tabindex="3.5"
+                                title="Browse for file or directory"
+                            >
+                                📁
+                            </button>
+                            <datalist id="pathSuggestions"></datalist>
+                        </div>
+                        <div id="path-validation" class="validation-message" aria-live="polite"></div>
+                    </div>
+                    <div class="button-group">
+                        <button 
+                            type="button" 
+                            id="addPathBtn"
+                            onclick="addPath()" 
+                            aria-describedby="add-path-desc"
+                            tabindex="4"
+                            disabled
+                        >Add</button>
+                        <button 
+                            type="button" 
+                            id="removePathBtn"
+                            class="secondary" 
+                            onclick="removePath()" 
+                            aria-describedby="remove-path-desc"
+                            tabindex="5"
+                            disabled
+                        >Remove</button>
+                    </div>
+                    <span id="path-help" class="sr-only">Enter an absolute file or directory path to add to or remove from indexing</span>
                     <span id="add-path-desc" class="sr-only">Add the specified path to indexing</span>
                     <span id="remove-path-desc" class="sr-only">Remove the specified path from indexing</span>
                 </form>
+                
+                <div class="path-list" id="pathList" aria-labelledby="paths-list-heading">
+                    <h3 id="paths-list-heading" class="path-list-title">Indexed Paths</h3>
+                    <div id="pathsContainer" class="paths-container" role="list" aria-live="polite">
+                        <div class="empty-state">No paths added yet</div>
+                    </div>
+                </div>
             </section>
 
             <section class="card" aria-labelledby="control-heading">
