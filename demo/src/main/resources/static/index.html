@@ -7,52 +7,219 @@
     <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <div class="container">
         <div class="header">
             <h1>Verbum Indexer Control Panel</h1>
+            <button 
+                type="button" 
+                class="help-button" 
+                onclick="openShortcutsDialog()" 
+                aria-label="Show keyboard shortcuts"
+                title="Show keyboard shortcuts (Press ? for shortcuts)"
+            >
+                Shortcuts
+            </button>
         </div>
         
-        <div class="content">
-            <div class="card">
-                <h2>Query Index</h2>
-                <div class="row">
-                    <input type="text" id="queryWord" placeholder="Enter word to query"/>
-                    <button onclick="queryIndexer()">Search</button>
-                </div>
-                <div id="results"></div>
-            </div>
+        <main class="content" id="main-content">
+            <section class="card" aria-labelledby="query-heading">
+                <h2 id="query-heading">Query Index</h2>
+                <form class="row" role="search" aria-label="Search the index">
+                    <label for="queryWord" class="sr-only">Search term</label>
+                    <input 
+                        type="text" 
+                        id="queryWord" 
+                        placeholder="Enter word to query"
+                        aria-describedby="query-help"
+                        autocomplete="off"
+                        tabindex="1"
+                    />
+                    <button 
+                        type="submit" 
+                        onclick="queryIndexer()" 
+                        aria-describedby="search-shortcut"
+                        tabindex="2"
+                    >Search</button>
+                    <span id="query-help" class="sr-only">Press Enter to search or Escape to clear</span>
+                    <span id="search-shortcut" class="sr-only">Keyboard shortcut: Enter</span>
+                </form>
+                <div 
+                    id="results" 
+                    role="region" 
+                    aria-label="Search results" 
+                    aria-live="polite"
+                    tabindex="0"
+                ></div>
+            </section>
 
-            <div class="card">
-                <h2>Manage Paths</h2>
-                <div class="row">
-                    <input type="text" id="pathInput" placeholder="Enter file or directory path"/>
-                    <button onclick="addPath()">Add</button>
-                    <button class="secondary" onclick="removePath()">Remove</button>
-                </div>
-            </div>
+            <section class="card" aria-labelledby="paths-heading">
+                <h2 id="paths-heading">Manage Paths</h2>
+                <form class="row" aria-label="Add or remove indexing paths">
+                    <label for="pathInput" class="sr-only">File or directory path</label>
+                    <input 
+                        type="text" 
+                        id="pathInput" 
+                        placeholder="Enter file or directory path"
+                        aria-describedby="path-help"
+                        autocomplete="off"
+                        tabindex="3"
+                    />
+                    <button 
+                        type="button" 
+                        onclick="addPath()" 
+                        aria-describedby="add-path-desc"
+                        tabindex="4"
+                    >Add</button>
+                    <button 
+                        type="button" 
+                        class="secondary" 
+                        onclick="removePath()" 
+                        aria-describedby="remove-path-desc"
+                        tabindex="5"
+                    >Remove</button>
+                    <span id="path-help" class="sr-only">Enter a file or directory path to add to or remove from indexing</span>
+                    <span id="add-path-desc" class="sr-only">Add the specified path to indexing</span>
+                    <span id="remove-path-desc" class="sr-only">Remove the specified path from indexing</span>
+                </form>
+            </section>
 
-            <div class="card">
-                <h2>Control Panel</h2>
-                <div class="controls-row">
+            <section class="card" aria-labelledby="control-heading">
+                <h2 id="control-heading">Control Panel</h2>
+                <div class="controls-row" role="group" aria-labelledby="control-heading">
                     <div class="control-group">
-                        <label class="control-label">Auto-Query</label>
-                        <label class="switch">
-                            <input id="autoQuerySwitch" type="checkbox">
-                            <span class="slider"></span>
+                        <label class="control-label" for="autoQuerySwitch">Auto-Query</label>
+                        <label class="switch" aria-describedby="auto-query-desc">
+                            <input 
+                                id="autoQuerySwitch" 
+                                type="checkbox" 
+                                role="switch"
+                                aria-describedby="auto-query-desc"
+                                tabindex="6"
+                            >
+                            <span class="slider" aria-hidden="true"></span>
                         </label>
+                        <span id="auto-query-desc" class="sr-only">Automatically repeat searches every 2 seconds</span>
                     </div>
                     <div class="control-group">
-                        <label class="control-label">Indexer Status</label>
-                        <label class="switch">
-                            <input id="indexerSwitch" type="checkbox">
-                            <span class="slider"></span>
+                        <label class="control-label" for="indexerSwitch">Indexer Status</label>
+                        <label class="switch" aria-describedby="indexer-desc">
+                            <input 
+                                id="indexerSwitch" 
+                                type="checkbox" 
+                                role="switch"
+                                aria-describedby="indexer-desc"
+                                tabindex="7"
+                            >
+                            <span class="slider" aria-hidden="true"></span>
                         </label>
+                        <span id="indexer-desc" class="sr-only">Turn the indexer service on or off</span>
                     </div>
                 </div>
 
-                <div class="status-log">
-                    <label>Status Log</label>
-                    <textarea id="statusLog" readonly placeholder="System logs will appear here..."></textarea>
+                <div class="status-log" role="region" aria-labelledby="log-heading">
+                    <label id="log-heading" for="statusLog">Status Log</label>
+                    <textarea 
+                        id="statusLog" 
+                        readonly 
+                        placeholder="System logs will appear here..."
+                        aria-describedby="log-help"
+                        aria-live="polite"
+                        tabindex="8"
+                    ></textarea>
+                    <span id="log-help" class="sr-only">Live log of system events and operations</span>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Keyboard Shortcuts Dialog -->
+    <div 
+        id="shortcutsDialog" 
+        class="dialog-overlay" 
+        role="dialog" 
+        aria-labelledby="shortcuts-title"
+        aria-describedby="shortcuts-description" 
+        aria-modal="true"
+        hidden
+    >
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h2 id="shortcuts-title">Keyboard Shortcuts</h2>
+                <button 
+                    type="button" 
+                    class="dialog-close" 
+                    onclick="closeShortcutsDialog()"
+                    aria-label="Close shortcuts dialog"
+                >
+                    ×
+                </button>
+            </div>
+            <div id="shortcuts-description" class="dialog-body">
+                <div class="shortcuts-grid">
+                    <div class="shortcut-group">
+                        <h3>Search</h3>
+                        <div class="shortcut-item">
+                            <kbd>Enter</kbd>
+                            <span>Search index</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Escape</kbd>
+                            <span>Clear search</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Ctrl</kbd> + <kbd>K</kbd>
+                            <span>Focus search</span>
+                        </div>
+                    </div>
+                    
+                    <div class="shortcut-group">
+                        <h3>Path Management</h3>
+                        <div class="shortcut-item">
+                            <kbd>Enter</kbd>
+                            <span>Add path</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Shift</kbd> + <kbd>Enter</kbd>
+                            <span>Remove path</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Alt</kbd> + <kbd>P</kbd>
+                            <span>Focus path input</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Escape</kbd>
+                            <span>Clear path input</span>
+                        </div>
+                    </div>
+                    
+                    <div class="shortcut-group">
+                        <h3>Navigation</h3>
+                        <div class="shortcut-item">
+                            <kbd>Alt</kbd> + <kbd>L</kbd>
+                            <span>Focus status log</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Tab</kbd>
+                            <span>Next element</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Shift</kbd> + <kbd>Tab</kbd>
+                            <span>Previous element</span>
+                        </div>
+                    </div>
+                    
+                    <div class="shortcut-group">
+                        <h3>Help</h3>
+                        <div class="shortcut-item">
+                            <kbd>?</kbd>
+                            <span>Show this dialog</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Escape</kbd>
+                            <span>Close dialog</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
