@@ -2,6 +2,8 @@
 
 A modern web-based control panel for the Verbum file indexing system with beautiful pastel UI and comprehensive accessibility features.
 
+![Verbum Demo Interface](docs/images/verbum-demo-page.jpg)
+
 ## 🚀 Quick Start
 
 ### Prerequisites
