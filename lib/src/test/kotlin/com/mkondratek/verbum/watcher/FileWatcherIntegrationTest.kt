@@ -275,8 +275,8 @@ class FileWatcherIntegrationTest {
             Files.writeString(fileInFirstDir, "modified")
             Files.writeString(fileInSecondDir, "modified")
 
-            // Wait and verify that no events come from firstDir, but do come from secondDir
-            Thread.sleep(500) // short wait for events propagation
+            // Wait and verify that events come from secondDir (but not from unwatched firstDir)
+            waitFor { events.any { it.path.startsWith(secondDir) } }
 
             assertTrue(
                 events.none { it.path.startsWith(testDir) },

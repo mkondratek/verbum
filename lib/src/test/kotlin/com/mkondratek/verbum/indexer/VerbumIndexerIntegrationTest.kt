@@ -32,9 +32,9 @@ class VerbumIndexerIntegrationTest {
     @Test
     fun `indexer updatesIndex whenFileCreated`() {
         indexer.startWatching()
+        indexer.addPath(tempDir)
 
         val file = tempDir.resolve("test.txt")
-        indexer.addPath(file)
         Files.writeString(file, "hello world")
 
         waitFor { setOf(file) == indexer.query("hello") }
