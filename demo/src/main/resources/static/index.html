@@ -2,149 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Verbum Indexer Control</title>
     <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-<h1>Verbum Indexer Control Panel</h1>
-
-<section>
-    <h2>Query Index</h2>
-    <div class="row">
-        <input type="text" id="queryWord" placeholder="Enter word to query"/>
-        <button onclick="queryIndexer()">Query</button>
-    </div>
-    <div id="results"></div>
-</section>
-
-<section>
-    <h2>Manage Paths</h2>
-    <div class="row">
-        <input type="text" id="pathInput"
-               placeholder="Enter file or directory path"/>
-        <button onclick="addPath()">Add</button>
-        <button onclick="removePath()">Remove</button>
-    </div>
-    <div id="pathStatus"></div>
-</section>
-
-<section>
-    <div class="row">
-        <div class="auto-query-control">
-            <label>Auto-Query</label>
-            <label class="switch">
-                <input id="autoQuerySwitch" type="checkbox">
-                <span class="slider"></span>
-            </label>
+    <div class="container">
+        <div class="header">
+            <h1>Verbum Indexer Control Panel</h1>
         </div>
-        <div class="indexer-control">
-            <label>Indexer</label>
-            <label class="switch">
-                <input id="indexerSwitch" type="checkbox">
-                <span class="slider"></span>
-            </label>
+        
+        <div class="content">
+            <div class="card">
+                <h2>Query Index</h2>
+                <div class="row">
+                    <input type="text" id="queryWord" placeholder="Enter word to query"/>
+                    <button onclick="queryIndexer()">Search</button>
+                </div>
+                <div id="results"></div>
+            </div>
+
+            <div class="card">
+                <h2>Manage Paths</h2>
+                <div class="row">
+                    <input type="text" id="pathInput" placeholder="Enter file or directory path"/>
+                    <button onclick="addPath()">Add</button>
+                    <button class="secondary" onclick="removePath()">Remove</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Control Panel</h2>
+                <div class="controls-row">
+                    <div class="control-group">
+                        <label class="control-label">Auto-Query</label>
+                        <label class="switch">
+                            <input id="autoQuerySwitch" type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Indexer Status</label>
+                        <label class="switch">
+                            <input id="indexerSwitch" type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="status-log">
+                    <label>Status Log</label>
+                    <textarea id="statusLog" readonly placeholder="System logs will appear here..."></textarea>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="status-log">
-        <label>Status Log</label>
-        <textarea id="statusLog" readonly></textarea>
-    </div>
-</section>
-
-<script>
-    async function queryIndexer() {
-        const word = document.getElementById('queryWord').value.trim();
-        if (!word) {
-            alert('Please enter a word to query');
-            return;
-        }
-        const res = await fetch(`/api/indexer/query?word=${encodeURIComponent(word)}`);
-        const data = await res.json();
-        document.getElementById('results').textContent = JSON.stringify(data, null, 2);
-    }
-
-    async function addPath() {
-        const path = document.getElementById('pathInput').value.trim();
-        if (!path) {
-            alert('Please enter a path to add');
-            return;
-        }
-        const res = await fetch('/api/indexer/add', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({path})
-        });
-        if (res.ok) {
-            document.getElementById('pathStatus').textContent = `Path added: ${path}`;
-        } else {
-            const error = await res.text();
-            document.getElementById('pathStatus').textContent = `Failed to add path: ${error}`;
-        }
-    }
-
-    async function removePath() {
-        const path = document.getElementById('pathInput').value.trim();
-        if (!path) {
-            alert('Please enter a path to remove');
-            return;
-        }
-        const res = await fetch('/api/indexer/remove', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({path})
-        });
-        if (res.ok) {
-            document.getElementById('pathStatus').textContent = `Path removed: ${path}`;
-        } else {
-            const error = await res.text();
-            document.getElementById('pathStatus').textContent = `Failed to remove path: ${error}`;
-        }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-        const switchEl = document.getElementById("indexerSwitch");
-        const statusEl = document.getElementById("indexerStatus");
-
-        switchEl.addEventListener("change", async () => {
-            if (switchEl.checked) {
-                statusEl.textContent = "Indexer is ON";
-                await fetch("/start", {method: "POST"});
-            } else {
-                statusEl.textContent = "Indexer is OFF";
-                await fetch("/stop", {method: "POST"});
-            }
-        });
-
-        const autoQuerySwitch = document.getElementById("autoQuerySwitch");
-        const autoQueryStatus = document.getElementById("autoQueryStatus");
-        let autoQueryInterval = null;
-
-        autoQuerySwitch.addEventListener("change", () => {
-            if (autoQuerySwitch.checked) {
-                autoQueryStatus.textContent = "Auto-Query is ON";
-                autoQueryInterval = setInterval(runAutoQuery, 2000); // every 2s
-            } else {
-                autoQueryStatus.textContent = "Auto-Query is OFF";
-                clearInterval(autoQueryInterval);
-            }
-        });
-
-        async function runAutoQuery() {
-            const queryInput = document.getElementById("queryInput");
-            if (queryInput && queryInput.value.trim() !== "") {
-                const response = await fetch(`/query?word=${encodeURIComponent(queryInput.value)}`);
-                const results = await response.json();
-                displayQueryResults(results);
-            }
-        }
-
-        function displayQueryResults(results) {
-            const resultsEl = document.getElementById("results");
-            if (!resultsEl) return;
-            resultsEl.innerHTML = results.map(r => `<li>${r}</li>`).join("");
-        }
-    });
-</script>
+    <script src="script.js"></script>
 </body>
 </html>
