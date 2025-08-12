@@ -105,7 +105,7 @@ class VerbumIndexer(
     }
 
     private fun indexFile(path: Path) {
-        val tokens = tokenizer.tokenize(path.readText())
+        val tokens = tokenizer.tokenize(path.readText(), path)
         tokens
             .forEach {
                 index.computeIfAbsent(it) { ConcurrentHashMap.newKeySet() }.add(path)
