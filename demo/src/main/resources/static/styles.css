@@ -955,3 +955,60 @@ input:checked + .slider:before {
 .picker-option:not(:last-child) {
     border-bottom: 1px solid var(--border-color);
 }
+
+/* Path Prompt Dialog */
+.path-prompt-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    animation: fadeIn 0.2s ease;
+}
+
+.path-prompt-dialog {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    max-width: 500px;
+    width: 90%;
+    padding: var(--spacing-xl);
+    animation: slideIn 0.3s ease;
+}
+
+.path-prompt-dialog h3 {
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+}
+
+.path-prompt-dialog p {
+    margin: 0 0 var(--spacing-lg) 0;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.path-prompt-dialog input {
+    width: 100%;
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    margin-bottom: var(--spacing-lg);
+}
+
+.path-prompt-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: flex-end;
+}
+
+.path-prompt-buttons button {
+    min-width: 100px;
+}

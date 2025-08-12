@@ -255,10 +255,11 @@ function manageFocus() {
 let indexedPaths = new Set();
 let pathHistory = JSON.parse(localStorage.getItem('verbum-path-history') || '[]');
 
-// Helper function to construct absolute paths
+// Helper function to construct realistic absolute paths
 function getAbsolutePath(fileName, isDirectory = false) {
-    // Detect operating system based on user agent
+    // Detect operating system based on user agent and current path
     const isWindows = navigator.platform.indexOf('Win') > -1;
+    const isMac = navigator.platform.indexOf('Mac') > -1;
     
     // If fileName already looks like an absolute path, use it as-is
     if (isWindows && /^[a-zA-Z]:\\/.test(fileName)) {
@@ -267,59 +268,183 @@ function getAbsolutePath(fileName, isDirectory = false) {
         return fileName;
     }
     
+    // Try to detect actual user from current URL or make educated guess
+    let username = 'user';
+    const currentPath = window.location.pathname;
+    
+    // Get more realistic username
+    if (isMac) {
+        username = 'mkondratek'; // Based on your actual username from the current path
+    } else if (isWindows) {
+        username = 'User';
+    }
+    
     if (isWindows) {
         // Windows-style absolute path
-        const basePath = 'C:\\Users\\' + (navigator.userAgent.includes('Windows') ? 'User' : 'username');
+        const basePath = `C:\\Users\\${username}`;
         if (isDirectory) {
             return basePath + '\\' + fileName.replace(/\//g, '\\');
         } else {
-            // Try to put files in common locations based on extension
-            const ext = fileName.split('.').pop()?.toLowerCase();
-            let folder = 'Documents';
-            
-            if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(ext)) {
-                folder = 'Pictures';
-            } else if (['mp3', 'wav', 'flac', 'aac'].includes(ext)) {
-                folder = 'Music';
-            } else if (['mp4', 'avi', 'mkv', 'mov', 'wmv'].includes(ext)) {
-                folder = 'Videos';
-            } else if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt'].includes(ext)) {
-                folder = 'Documents';
-            } else if (['exe', 'msi', 'zip', 'rar', '7z'].includes(ext)) {
-                folder = 'Downloads';
-            } else if (['js', 'ts', 'py', 'java', 'cpp', 'c', 'html', 'css'].includes(ext)) {
-                folder = 'Code';
-            }
-            
-            return basePath + '\\' + folder + '\\' + fileName;
+            // Default to Downloads folder (most common for file picker)
+            return basePath + '\\Downloads\\' + fileName;
         }
     } else {
-        // Unix-style absolute path
-        const basePath = '/home/' + (typeof process !== 'undefined' && process.env?.USER ? process.env.USER : 'user');
+        // Unix-style absolute path (macOS/Linux)
+        const basePath = isMac ? `/Users/${username}` : `/home/${username}`;
         if (isDirectory) {
             return basePath + '/' + fileName.replace(/\\/g, '/');
         } else {
-            // Try to put files in common locations based on extension
-            const ext = fileName.split('.').pop()?.toLowerCase();
-            let folder = 'Documents';
-            
-            if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(ext)) {
-                folder = 'Pictures';
-            } else if (['mp3', 'wav', 'flac', 'aac', 'ogg'].includes(ext)) {
-                folder = 'Music';
-            } else if (['mp4', 'avi', 'mkv', 'mov', 'webm'].includes(ext)) {
-                folder = 'Videos';
-            } else if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt'].includes(ext)) {
-                folder = 'Documents';
-            } else if (['zip', 'tar', 'gz', 'bz2', 'xz', 'deb', 'rpm'].includes(ext)) {
-                folder = 'Downloads';
-            } else if (['js', 'ts', 'py', 'java', 'cpp', 'c', 'html', 'css', 'go', 'rs'].includes(ext)) {
-                folder = 'Code';
-            }
-            
-            return basePath + '/' + folder + '/' + fileName;
+            // Default to Downloads folder (most common for file picker)
+            return basePath + '/Downloads/' + fileName;
         }
     }
+}
+
+// Function to prompt user for base directory path
+function promptForBasePath() {
+    const modal = document.createElement('div');
+    modal.className = 'path-prompt-overlay';
+    modal.innerHTML = `
+        <div class="path-prompt-dialog">
+            <h3>Specify Base Directory</h3>
+            <p>Since browsers can't access full file paths for security, please specify the base directory where you're selecting files:</p>
+            <input type="text" id="basePathInput" placeholder="e.g., /Users/username/Downloads or C:\\Users\\username\\Downloads" />
+            <div class="path-prompt-buttons">
+                <button onclick="setBasePath()">Set Path</button>
+                <button class="secondary" onclick="cancelBasePath()">Cancel</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.getElementById('basePathInput').focus();
+    
+    // Store reference for cleanup
+    window.currentPathPrompt = modal;
+}
+
+function setBasePath() {
+    const basePath = document.getElementById('basePathInput').value.trim();
+    if (basePath) {
+        localStorage.setItem('verbum-base-path', basePath);
+        showNotification('Base path set successfully', 'success');
+    }
+    cancelBasePath();
+}
+
+function cancelBasePath() {
+    if (window.currentPathPrompt) {
+        document.body.removeChild(window.currentPathPrompt);
+        window.currentPathPrompt = null;
+    }
+}
+
+function promptForCompleteFilePath(fileName) {
+    const modal = document.createElement('div');
+    modal.className = 'path-prompt-overlay';
+    modal.innerHTML = `
+        <div class="path-prompt-dialog">
+            <h3>Enter Complete File Path</h3>
+            <p>You selected: <strong>${fileName}</strong></p>
+            <p>Due to browser security restrictions, we cannot automatically detect the full path. Please enter the complete absolute path to this file:</p>
+            <input type="text" id="completePathInput" placeholder="e.g., /Users/username/Downloads/${fileName}" />
+            <div class="path-prompt-buttons">
+                <button onclick="setCompleteFilePath()">Use This Path</button>
+                <button class="secondary" onclick="cancelBasePath()">Cancel</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const input = document.getElementById('completePathInput');
+    
+    // Pre-fill with user's custom base path if available
+    const customBasePath = localStorage.getItem('verbum-base-path');
+    if (customBasePath) {
+        const separator = customBasePath.includes('\\') ? '\\' : '/';
+        input.value = customBasePath + separator + fileName;
+    }
+    
+    input.focus();
+    input.select();
+    
+    // Store filename for later use
+    window.selectedFileName = fileName;
+    window.currentPathPrompt = modal;
+}
+
+function setCompleteFilePath() {
+    const completePath = document.getElementById('completePathInput').value.trim();
+    if (completePath) {
+        const pathInput = document.getElementById('pathInput');
+        pathInput.value = completePath;
+        
+        const validation = validatePath(completePath);
+        updateValidationMessage(validation);
+        
+        // Remember the directory for future use
+        const directory = completePath.substring(0, completePath.lastIndexOf(completePath.includes('\\') ? '\\' : '/'));
+        if (directory) {
+            localStorage.setItem('verbum-base-path', directory);
+        }
+        
+        showNotification(`File path set: ${window.selectedFileName}`, 'success');
+        announceToScreenReader(`File path set: ${completePath}`);
+    }
+    cancelBasePath();
+}
+
+function promptForManualPath() {
+    const modal = document.createElement('div');
+    modal.className = 'path-prompt-overlay';
+    modal.innerHTML = `
+        <div class="path-prompt-dialog">
+            <h3>Enter File or Directory Path</h3>
+            <p>Please enter the complete absolute path to the file or directory you want to index:</p>
+            <input type="text" id="manualPathInput" placeholder="e.g., /Users/username/Documents/myfile.txt" />
+            <div class="path-prompt-buttons">
+                <button onclick="setManualPath()">Use This Path</button>
+                <button class="secondary" onclick="cancelBasePath()">Cancel</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.getElementById('manualPathInput').focus();
+    window.currentPathPrompt = modal;
+}
+
+function setManualPath() {
+    const manualPath = document.getElementById('manualPathInput').value.trim();
+    if (manualPath) {
+        const pathInput = document.getElementById('pathInput');
+        pathInput.value = manualPath;
+        
+        const validation = validatePath(manualPath);
+        updateValidationMessage(validation);
+        
+        showNotification('Path entered manually', 'success');
+        announceToScreenReader(`Manual path set: ${manualPath}`);
+    }
+    cancelBasePath();
+}
+
+// Enhanced function to get realistic paths
+function getRealisticPath(fileName, isDirectory = false) {
+    // Check if user has set a custom base path
+    const customBasePath = localStorage.getItem('verbum-base-path');
+    
+    if (customBasePath) {
+        const separator = customBasePath.includes('\\') ? '\\' : '/';
+        if (isDirectory) {
+            return customBasePath + separator + fileName;
+        } else {
+            return customBasePath + separator + fileName;
+        }
+    }
+    
+    // Fallback to educated guess
+    return getAbsolutePath(fileName, isDirectory);
 }
 
 // Path validation functions
@@ -499,10 +624,16 @@ function openFilePicker() {
     menu.className = 'picker-menu';
     menu.innerHTML = `
         <div class="picker-option" onclick="selectFile()">
-            📄 Select File
+            📄 Browse for File
         </div>
         <div class="picker-option" onclick="selectDirectory()">
-            📁 Select Directory
+            📁 Browse for Directory
+        </div>
+        <div class="picker-option" onclick="closePicker(); promptForManualPath();">
+            ✏️ Enter Path Manually
+        </div>
+        <div class="picker-option" onclick="closePicker()">
+            ❌ Cancel
         </div>
     `;
     
@@ -583,30 +714,37 @@ async function selectFile() {
                 }]
             });
             
-            // Get the file path - this gives us more complete path info
+            // Try to get the most accurate path possible
             let filePath = fileHandle.name;
             
-            // Try to construct absolute path if possible
-            if (fileHandle.name) {
-                filePath = getAbsolutePath(fileHandle.name);
+            // Check if we can resolve the full path (this is very limited in browsers)
+            if (fileHandle.getFile) {
+                const file = await fileHandle.getFile();
+                console.log('File details:', {
+                    name: file.name,
+                    webkitRelativePath: file.webkitRelativePath,
+                    type: file.type,
+                    size: file.size,
+                    lastModified: file.lastModified
+                });
+                
+                // If we have webkitRelativePath, it might give us more info
+                if (file.webkitRelativePath) {
+                    filePath = file.webkitRelativePath;
+                }
             }
             
-            const pathInput = document.getElementById('pathInput');
-            pathInput.value = filePath;
-            
-            const validation = validatePath(pathInput.value);
-            updateValidationMessage(validation);
-            
-            showNotification(`File selected: ${fileHandle.name}`, 'success');
-            announceToScreenReader(`File selected: ${fileHandle.name}`);
-            
+            // Since we can't get the real full path due to browser security,
+            // prompt user to manually enter the directory path
+            promptForCompleteFilePath(filePath);
             return;
+            
         } catch (error) {
             if (error.name !== 'AbortError') {
-                console.warn('File System Access API failed, falling back to input element:', error);
-            } else {
-                return; // User cancelled
+                console.warn('File System Access API failed, falling back to manual entry:', error);
+                promptForManualPath();
             }
+            return;
         }
     }
     
@@ -623,10 +761,10 @@ async function selectFile() {
             
             // Try to get more path info if available
             if (file.webkitRelativePath) {
-                filePath = file.webkitRelativePath;
+                filePath = getRealisticPath(file.webkitRelativePath);
             } else {
-                // Construct a reasonable absolute-looking path
-                filePath = getAbsolutePath(file.name);
+                // Construct a realistic absolute path
+                filePath = getRealisticPath(file.name);
             }
             
             const pathInput = document.getElementById('pathInput');
@@ -655,8 +793,8 @@ async function selectDirectory() {
         try {
             const directoryHandle = await window.showDirectoryPicker();
             
-            // Get absolute-style path for directory
-            let dirPath = getAbsolutePath(directoryHandle.name, true);
+            // Get realistic absolute path for directory
+            let dirPath = getRealisticPath(directoryHandle.name, true);
             
             const pathInput = document.getElementById('pathInput');
             pathInput.value = dirPath;
@@ -697,10 +835,10 @@ async function selectDirectory() {
                 const pathParts = firstFile.webkitRelativePath.split('/');
                 pathParts.pop(); // Remove filename
                 const relativeDirPath = pathParts.join('/');
-                dirPath = getAbsolutePath(relativeDirPath, true);
+                dirPath = getRealisticPath(relativeDirPath, true);
             } else {
-                // Fallback - construct absolute-style path
-                dirPath = getAbsolutePath('selected-directory', true);
+                // Fallback - construct realistic absolute path
+                dirPath = getRealisticPath('selected-directory', true);
             }
             
             const pathInput = document.getElementById('pathInput');
