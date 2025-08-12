@@ -1,18 +1,18 @@
 :root {
-    --primary-color: #3b82f6;
-    --primary-dark: #2563eb;
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
-    --error-color: #ef4444;
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8fafc;
-    --bg-tertiary: #f1f5f9;
-    --text-primary: #1e293b;
-    --text-secondary: #64748b;
-    --border-color: #e2e8f0;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --border-radius: 8px;
+    --primary-color: #8b9dc9;
+    --primary-dark: #6b7db8;
+    --success-color: #8fbc8f;
+    --warning-color: #ddb896;
+    --error-color: #d49a9a;
+    --bg-primary: #fdfdf8;
+    --bg-secondary: #f7f6f3;
+    --bg-tertiary: #f0ede8;
+    --text-primary: #4a4a4a;
+    --text-secondary: #6b6b6b;
+    --border-color: #e8e4df;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.08);
+    --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.12), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+    --border-radius: 12px;
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
     --spacing-md: 1rem;
@@ -40,7 +40,7 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     line-height: 1.6;
     color: var(--text-primary);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #c8d5e8 0%, #b8c9d9 50%, #d4c4a8 100%);
     min-height: 100vh;
     margin: 0;
     padding: var(--spacing-md);
@@ -56,13 +56,15 @@ body {
 }
 
 .header {
-    background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: white;
     padding: var(--spacing-lg) var(--spacing-xl);
     display: flex;
     align-items: center;
     justify-content: space-between;
     position: relative;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-md);
 }
 
 .header h1 {
@@ -178,22 +180,22 @@ input[type="text"]:focus {
 
 input[type="text"].valid {
     border-color: var(--success-color);
-    background: linear-gradient(90deg, var(--bg-primary) 0%, rgba(16, 185, 129, 0.05) 100%);
+    background: linear-gradient(90deg, var(--bg-primary) 0%, rgba(143, 188, 143, 0.08) 100%);
 }
 
 input[type="text"].invalid {
     border-color: var(--error-color);
-    background: linear-gradient(90deg, var(--bg-primary) 0%, rgba(239, 68, 68, 0.05) 100%);
+    background: linear-gradient(90deg, var(--bg-primary) 0%, rgba(212, 154, 154, 0.08) 100%);
 }
 
 input[type="text"].valid:focus {
     border-color: var(--success-color);
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    box-shadow: 0 0 0 3px rgba(143, 188, 143, 0.15);
 }
 
 input[type="text"].invalid:focus {
     border-color: var(--error-color);
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    box-shadow: 0 0 0 3px rgba(212, 154, 154, 0.15);
 }
 
 .browse-button {
@@ -232,19 +234,19 @@ input[type="text"].invalid:focus {
 
 .validation-message.success {
     color: var(--success-color);
-    background: rgba(16, 185, 129, 0.1);
+    background: rgba(143, 188, 143, 0.12);
     border-left: 3px solid var(--success-color);
 }
 
 .validation-message.error {
     color: var(--error-color);
-    background: rgba(239, 68, 68, 0.1);
+    background: rgba(212, 154, 154, 0.12);
     border-left: 3px solid var(--error-color);
 }
 
 .validation-message.warning {
     color: var(--warning-color);
-    background: rgba(245, 158, 11, 0.1);
+    background: rgba(221, 184, 150, 0.12);
     border-left: 3px solid var(--warning-color);
 }
 
