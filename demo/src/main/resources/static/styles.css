@@ -358,10 +358,10 @@ button.secondary:disabled {
 /* Section headers with tooltips */
 .section-header {
     display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
+    align-items: baseline;
+    gap: 6px;
     margin-bottom: var(--spacing-xs);
-    flex-wrap: nowrap;
+    width: fit-content;
 }
 
 .section-description {
@@ -380,37 +380,55 @@ button.secondary:disabled {
 .control-header {
     display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
+    gap: 8px;
 }
 
-/* Tooltip system */
+/* Tooltip system - main headers */
 .tooltip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    display: inline-block;
     width: 16px;
     height: 16px;
     border-radius: 50%;
     background: var(--primary-color);
     color: white;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: normal;
     cursor: help;
     position: relative;
-    transition: all 0.2s ease;
-    opacity: 0.5;
-    border: 1px solid rgba(255,255,255,0.2);
-    box-shadow: none;
-    flex-shrink: 0;
+    text-align: center;
+    line-height: 16px;
+    opacity: 0.6;
+    vertical-align: middle;
+    margin-left: 6px;
+}
+
+/* Tooltip system - smaller text (H3, labels) */
+.tooltip-small {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    font-size: 8px;
+    font-weight: normal;
+    cursor: help;
+    position: relative;
+    text-align: center;
+    line-height: 12px;
+    opacity: 0.6;
+    vertical-align: middle;
     margin-left: 4px;
+    margin-top: -1px;
 }
 
-.tooltip:hover {
+.tooltip:hover,
+.tooltip-small:hover {
     opacity: 1;
-    transform: scale(1.1);
 }
 
-.tooltip::before {
+.tooltip::before,
+.tooltip-small::before {
     content: attr(data-tooltip);
     position: absolute;
     bottom: 120%;
@@ -435,14 +453,8 @@ button.secondary:disabled {
     line-height: 1.4;
 }
 
-/* Fix tooltip overflow for elements near the right edge */
-.tooltip-right::before {
-    left: auto;
-    right: 0;
-    transform: none;
-}
-
-.tooltip::after {
+.tooltip::after,
+.tooltip-small::after {
     content: '';
     position: absolute;
     bottom: 105%;
@@ -456,15 +468,10 @@ button.secondary:disabled {
     z-index: 1000;
 }
 
-/* Adjust arrow position for right-aligned tooltips */
-.tooltip-right::after {
-    left: auto;
-    right: 8px;
-    transform: none;
-}
-
 .tooltip:hover::before,
-.tooltip:hover::after {
+.tooltip:hover::after,
+.tooltip-small:hover::before,
+.tooltip-small:hover::after {
     opacity: 1;
     visibility: visible;
 }

@@ -28,8 +28,7 @@
         <main class="content" id="main-content">
             <section class="card" aria-labelledby="query-heading">
                 <div class="section-header">
-                    <h2 id="query-heading">🔍 Search Your Files</h2>
-                    <div class="tooltip" data-tooltip="Search for any word across all your indexed files. Files must be added to indexing first.">?</div>
+                    <h2 id="query-heading">🔍 Search Your Files <div class="tooltip" data-tooltip="Search for any word across all your indexed files. Files must be added to indexing first.">?</div></h2>
                 </div>
                 <p class="section-description">Find files containing specific words from all your indexed content</p>
                 <form class="row" role="search" aria-label="Search the index" onsubmit="event.preventDefault(); queryIndexer();">
@@ -61,8 +60,7 @@
 
             <section class="card" aria-labelledby="paths-heading">
                 <div class="section-header">
-                    <h2 id="paths-heading">📁 Add Files & Folders to Index</h2>
-                    <div class="tooltip" data-tooltip="Add files or folders to make their content searchable. The indexer will scan all text files and create a searchable index.">?</div>
+                    <h2 id="paths-heading">📁 Add Files & Folders to Index <div class="tooltip" data-tooltip="Add files or folders to make their content searchable. The indexer will scan all text files and create a searchable index.">?</div></h2>
                 </div>
                 <p class="section-description">Choose files or folders to make their content searchable</p>
                 <form class="row" aria-label="Add or remove indexing paths">
@@ -109,8 +107,7 @@
                 
                 <div class="path-list" id="pathList" aria-labelledby="paths-list-heading">
                     <div class="section-header">
-                        <h3 id="paths-list-heading" class="path-list-title">📋 Currently Indexed</h3>
-                        <div class="tooltip" data-tooltip="These files and folders are being monitored and their content is searchable. Changes to these files are automatically indexed.">?</div>
+                        <h3 id="paths-list-heading" class="path-list-title">📋 Currently Indexed <div class="tooltip-small" data-tooltip="These files and folders are being monitored and their content is searchable. Changes to these files are automatically indexed.">?</div></h3>
                     </div>
                     <div id="pathsContainer" class="paths-container" role="list" aria-live="polite">
                         <div class="empty-state">No files or folders indexed yet. Add some above to start searching!</div>
@@ -120,15 +117,13 @@
 
             <section class="card" aria-labelledby="control-heading">
                 <div class="section-header">
-                    <h2 id="control-heading">⚙️ Settings & Monitoring</h2>
-                    <div class="tooltip" data-tooltip="Control how the search engine behaves and monitor its activity.">?</div>
+                    <h2 id="control-heading">⚙️ Settings & Monitoring <div class="tooltip" data-tooltip="Control how the search engine behaves and monitor its activity.">?</div></h2>
                 </div>
                 <p class="section-description">Configure automatic features and monitor system activity</p>
                 <div class="controls-row" role="group" aria-labelledby="control-heading">
                     <div class="control-group">
                         <div class="control-header">
-                            <label class="control-label" for="autoQuerySwitch">🔄 Auto-Refresh Search</label>
-                            <div class="tooltip" data-tooltip="When enabled, your search results will automatically update every 2 seconds to show the latest matches.">?</div>
+                            <label class="control-label" for="autoQuerySwitch">🔄 Auto-Refresh Search <div class="tooltip-small" data-tooltip="When enabled, your search results will automatically update every 2 seconds to show the latest matches.">?</div></label>
                         </div>
                         <label class="switch" aria-describedby="auto-query-desc">
                             <input 
@@ -144,8 +139,7 @@
                     </div>
                     <div class="control-group">
                         <div class="control-header">
-                            <label class="control-label" for="indexerSwitch">🏃 Live File Monitoring</label>
-                            <div class="tooltip tooltip-right" data-tooltip="When enabled, the system automatically detects changes to your files and updates the search index in real-time.">?</div>
+                            <label class="control-label" for="indexerSwitch">🏃 Live File Monitoring <div class="tooltip-small" data-tooltip="When enabled, the system automatically detects changes to your files and updates the search index in real-time.">?</div></label>
                         </div>
                         <label class="switch" aria-describedby="indexer-desc">
                             <input 
@@ -163,8 +157,7 @@
 
                 <div class="status-log" role="region" aria-labelledby="log-heading">
                     <div class="section-header">
-                        <label id="log-heading" for="statusLog">📝 Activity Log</label>
-                        <div class="tooltip" data-tooltip="Real-time log showing what the search engine is doing - indexing files, processing searches, detecting changes, etc.">?</div>
+                        <label id="log-heading" for="statusLog">📝 Activity Log <div class="tooltip-small" data-tooltip="Real-time log showing what the search engine is doing - indexing files, processing searches, detecting changes, etc.">?</div></label>
                     </div>
                     <textarea 
                         id="statusLog" 
