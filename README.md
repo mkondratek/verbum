@@ -18,12 +18,12 @@ A modern web-based control panel for the Verbum file indexing system with beauti
 
 2. **Run the demo application**
    ```bash
-   ./gradlew :demo:run
+   ./gradlew :demo:bootRun
    ```
    
    Or on Windows:
    ```bash
-   gradlew.bat :demo:run
+   gradlew.bat :demo:bootRun
    ```
 
 3. **Open your browser**

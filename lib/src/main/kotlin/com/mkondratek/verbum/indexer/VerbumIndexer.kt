@@ -71,7 +71,7 @@ class VerbumIndexer(
         indexReverse.keys.filter { it.startsWith(path) }.forEach { deindexFile(it) }
     }
 
-    override fun query(word: String): Set<Path> = index[Token(word)]?.toSet() ?: emptySet()
+    override fun query(word: String): Set<Path> = index[Token(word.lowercase())]?.toSet() ?: emptySet()
 
     @Synchronized
     override fun startWatching() {

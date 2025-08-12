@@ -211,4 +211,55 @@ class VerbumIndexerIntegrationTest {
         waitFor { indexer.query("banana").isEmpty() }
     }
 
+    @Test
+    fun `tokenization excludes tokens shorter than 2 characters`() {
+        indexer.startWatching()
+
+        val file = tempDir.resolve("short_tokens.txt")
+        file.writeText("a bb c dd e ff")
+        indexer.addPath(file)
+
+        // Wait for indexing to complete
+        waitFor { setOf(file) == indexer.query("bb") }
+
+        // Single character tokens should not be found
+        assertTrue(indexer.query("a").isEmpty())
+        assertTrue(indexer.query("c").isEmpty())
+        assertTrue(indexer.query("e").isEmpty())
+
+        // Two character tokens should be found
+        assertTrue(setOf(file) == indexer.query("bb"))
+        assertTrue(setOf(file) == indexer.query("dd"))
+        assertTrue(setOf(file) == indexer.query("ff"))
+    }
+
+    @Test
+    fun `tokenization and search are case insensitive`() {
+        indexer.startWatching()
+
+        val file = tempDir.resolve("case_test.txt")
+        file.writeText("Hello WORLD Mixed CaSe")
+        indexer.addPath(file)
+
+        // Wait for indexing to complete
+        waitFor { setOf(file) == indexer.query("hello") }
+
+        // All case variations should return the same result
+        assertTrue(setOf(file) == indexer.query("hello"))
+        assertTrue(setOf(file) == indexer.query("HELLO"))
+        assertTrue(setOf(file) == indexer.query("Hello"))
+        
+        assertTrue(setOf(file) == indexer.query("world"))
+        assertTrue(setOf(file) == indexer.query("WORLD"))
+        assertTrue(setOf(file) == indexer.query("World"))
+        
+        assertTrue(setOf(file) == indexer.query("mixed"))
+        assertTrue(setOf(file) == indexer.query("MIXED"))
+        assertTrue(setOf(file) == indexer.query("Mixed"))
+        
+        assertTrue(setOf(file) == indexer.query("case"))
+        assertTrue(setOf(file) == indexer.query("CASE"))
+        assertTrue(setOf(file) == indexer.query("CaSe"))
+    }
+
 }
