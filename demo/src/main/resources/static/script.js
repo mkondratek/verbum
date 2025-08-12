@@ -776,21 +776,52 @@ document.addEventListener("DOMContentLoaded", () => {
     const switchEl = document.getElementById("indexerSwitch");
     
     switchEl.addEventListener("change", async () => {
+        const newState = switchEl.checked;
+        const previousState = !newState;
+        
+        // Add visual feedback - switch stays in new position for immediate response
         try {
-            if (switchEl.checked) {
+            if (newState) {
                 logStatus("Starting indexer...");
-                await fetch("/start", {method: "POST"});
+                
+                // Add small delay to show the switch animation
+                await new Promise(resolve => setTimeout(resolve, 150));
+                
+                const response = await fetch("/start", {method: "POST"});
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 logStatus("Indexer is ON");
                 showNotification('Indexer started', 'success');
+                announceToScreenReader('Indexer started successfully');
             } else {
                 logStatus("Stopping indexer...");
-                await fetch("/stop", {method: "POST"});
+                
+                // Add small delay to show the switch animation
+                await new Promise(resolve => setTimeout(resolve, 150));
+                
+                const response = await fetch("/stop", {method: "POST"});
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 logStatus("Indexer is OFF");
                 showNotification('Indexer stopped', 'info');
+                announceToScreenReader('Indexer stopped');
             }
         } catch (error) {
-            logStatus(`Error: ${error.message}`);
-            showNotification('Failed to toggle indexer', 'error');
+            // Smoothly revert the switch state on error with animation
+            setTimeout(() => {
+                switchEl.checked = previousState;
+            }, 200);
+            
+            const action = newState ? 'start' : 'stop';
+            logStatus(`✗ Failed to ${action} indexer: ${error.message}`);
+            showNotification(`Failed to ${action} indexer`, 'error');
+            announceToScreenReader(`Failed to ${action} indexer: ${error.message}`);
         }
     });
 
