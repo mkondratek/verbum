@@ -9,6 +9,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 
 class VerbumIndexer(
@@ -53,8 +54,10 @@ class VerbumIndexer(
     override fun addPath(path: Path) {
         if (path.isDirectory()) {
             fileWatcher.watch(path)
-        } else {
+        } else if (path.isRegularFile()) {
             fileWatcher.watch(path.parent)
+        } else {
+            throw IllegalArgumentException("Can only watch directories and files. Got: $path")
         }
 
         walkAndExecute(path) { indexFile(it) }
