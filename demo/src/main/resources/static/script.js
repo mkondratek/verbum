@@ -925,7 +925,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Add small delay to show the switch animation
                 await new Promise(resolve => setTimeout(resolve, 150));
                 
-                const response = await fetch("/start", {method: "POST"});
+                const response = await fetch("/api/indexer/start", {method: "POST"});
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -940,7 +940,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Add small delay to show the switch animation
                 await new Promise(resolve => setTimeout(resolve, 150));
                 
-                const response = await fetch("/stop", {method: "POST"});
+                const response = await fetch("/api/indexer/stop", {method: "POST"});
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
