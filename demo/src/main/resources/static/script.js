@@ -68,50 +68,7 @@ async function addPath() {
     }
 }
 
-async function removePath() {
-    const path = document.getElementById('pathInput').value.trim();
-    
-    if (!path) {
-        showNotification('Please enter a path to remove', 'warning');
-        return;
-    }
-    
-    if (!indexedPaths.has(path)) {
-        showNotification('Path is not currently indexed', 'warning');
-        return;
-    }
-    
-    logStatus(`Removing path: ${path}`);
-    
-    try {
-        const res = await fetch('/api/indexer/remove', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({path})
-        });
-        
-        if (res.ok) {
-            indexedPaths.delete(path);
-            renderPathsList();
-            
-            logStatus(`✓ Path removed successfully: ${path}`);
-            showNotification('Path removed successfully', 'success');
-            
-            // Clear and reset form
-            document.getElementById('pathInput').value = '';
-            updateValidationMessage({ type: 'empty' });
-            
-            announceToScreenReader(`Path removed: ${path}`);
-        } else {
-            const error = await res.text();
-            logStatus(`✗ Failed to remove path: ${error}`);
-            showNotification('Failed to remove path', 'error');
-        }
-    } catch (error) {
-        logStatus(`✗ Network error while removing path: ${error.message}`);
-        showNotification('Network error occurred', 'error');
-    }
-}
+
 
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
@@ -513,7 +470,6 @@ function updateValidationMessage(validation) {
     const messageEl = document.getElementById('path-validation');
     const inputEl = document.getElementById('pathInput');
     const addBtn = document.getElementById('addPathBtn');
-    const removeBtn = document.getElementById('removePathBtn');
     
     // Clear previous states
     messageEl.className = 'validation-message';
@@ -522,7 +478,6 @@ function updateValidationMessage(validation) {
     if (validation.type === 'empty') {
         messageEl.textContent = '';
         addBtn.disabled = true;
-        removeBtn.disabled = true;
         return;
     }
     
@@ -530,7 +485,7 @@ function updateValidationMessage(validation) {
     messageEl.textContent = validation.message;
     messageEl.classList.add(validation.type);
     
-    // Update input styling
+    // Update input styling and button state
     if (validation.valid) {
         inputEl.classList.add('valid');
         addBtn.disabled = false;
@@ -538,10 +493,6 @@ function updateValidationMessage(validation) {
         inputEl.classList.add('invalid');
         addBtn.disabled = true;
     }
-    
-    // Remove button is enabled if path exists in indexed paths
-    const currentPath = inputEl.value.trim();
-    removeBtn.disabled = !indexedPaths.has(currentPath);
 }
 
 function initializePathValidation() {
